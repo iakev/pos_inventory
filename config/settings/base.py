@@ -101,6 +101,9 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "pos_inventory.users",
     # Your stuff: custom apps go here
+    "products",
+    "administration",
+    "sales",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
