@@ -24,6 +24,7 @@ class Employee(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=255)
     address = models.CharField(max_length=255, null=True, blank=True)
+    department = models.CharField(max_length=255, null=True, blank=True)
 
 class Customer(models.Model):
     """
@@ -38,7 +39,7 @@ class Supplier(models.Model):
     """
     Supplier of products information
     """
-    products = models.ManyToManyField('products.Product', related_name="suppliers", through="products.SupplierProduct")
+    products = models.ManyToManyField("products.Product", related_name="suppliers", through="products.SupplierProduct")
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     email_address = models.CharField(max_length=255, null=True, blank=True)
