@@ -278,7 +278,7 @@ pos_inventory/media/
 .ipython/
 pos_inventory/static/webpack_bundles/
 webpack-stats.json
-.env
+*.env
 .envs/*
 !.envs/.local/
 .envs/
