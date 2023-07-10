@@ -2,6 +2,7 @@
 Module that contains the Models that relate to Sales
 and Sales of products
 """
+import uuid as uuid_lib
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -25,7 +26,7 @@ class PaymentMode(models.Model):
         CARD = "05", _("DEBIT AND CREDIT CARD")
         MOBILE_MONEY = "06", _("MOBILE MONEY")
         OTHER = "07", _("OTHER")
-
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
     mode = models.CharField(max_length=3, choices=PaymentMethod.choices)
     properties = models.JSONField()
     
@@ -53,8 +54,9 @@ class ProductSales(models.Model):
     """
     Models the through Table of Product to Sales many to many
     """
-    products = models.ForeignKey(Product, related_name="sales", on_delete=models.CASCADE)
-    sales = models.ForeignKey('Sales', related_name="products", on_delete=models.CASCADE)
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    products = models.ForeignKey(Product, related_name="products", on_delete=models.CASCADE)
+    sales = models.ForeignKey('Sales', related_name="sales", on_delete=models.CASCADE)
     quantity_sold = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     price_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_wholesale = models.BooleanField(default=False)
@@ -98,12 +100,12 @@ class Sales(models.Model):
         NORMAL = "N", _("Normal")
         PROFORMA = "P", _("Proforma")
         TRAINING = "T", _("Training")
-    
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
     customer_id = models.ForeignKey(Customer, related_name='sales', on_delete=models.CASCADE, null= True, blank=True)
     business_id = models.OneToOneField(Business, related_name='sale', on_delete=models.CASCADE)
     payment_id = models.OneToOneField(PaymentMode, related_name='sale', on_delete=models.CASCADE)
     cashier_id = models.ForeignKey(Employee, related_name='sales', on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, related_name='sales', on_delete=models.CASCADE, through=ProductSales)
+    products = models.ManyToManyField(Product, related_name='sales', through=ProductSales)
     time_created = models.DateTimeField(auto_now=True)
     sale_amount_with_tax = models.DecimalField(max_digits=10,decimal_places=2,default=0.00,blank=True)    
     tax_amount = models.DecimalField(max_digits=10, blank=True,default=0.00, decimal_places=2)
