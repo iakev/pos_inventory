@@ -32,7 +32,7 @@ class StockSerializer(serializers.ModelSerializer):
         model = Stock
         fields = ['product_id', 'uuid', 'stock_quantity', 
                   'updated_at', 'cost_per_unit', 'price_per_unit_retail', 
-                  'price_per_unit_wholesale', 'reorder_level', 'reorder_quantinty' ]
+                  'price_per_unit_wholesale', 'reorder_level', 'reorder_quantity' ]
 
 class SupplierSerializer(serializers.ModelSerializer):
     """
