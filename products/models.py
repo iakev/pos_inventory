@@ -121,6 +121,7 @@ class Product(models.Model):
         tube = "TU", _("tube")
         Pieces_item_Number = "U", _("Pieces/item[Number]")
         yard = "YRD", _("yard")
+
     class TaxType(models.TextChoices):
         A = "A", _("A-Exempt")
         B = "B_16", _("B-16%")
@@ -136,9 +137,8 @@ class Product(models.Model):
         Finished_Product = "2", _("Finished Product")
         Service = "3", _("Service Without Stock")
 
-    category = models.ForeignKey(Category, related_name= "products", on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, related_name="products", on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    quantity = models.IntegerField()
     slug = models.SlugField()
     code = models.CharField(max_length=255)
     description = models.TextField(blank=True,null=True)
@@ -167,11 +167,11 @@ class Stock(models.Model):
     """
     Class with attributes for inventory management
     """
-    product_id = models.OneToOneField(Product, primary_key= True, on_delete=models.CASCADE)
+    product_id = models.OneToOneField(Product, primary_key=True, on_delete=models.CASCADE)
     stock_quantity = models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0.00)
     updated_at = models.DateTimeField(auto_now_add=True)
     cost_per_unit = models.DecimalField(max_digits=6,decimal_places=2)
     price_per_unit_retail = models.DecimalField(max_digits=6,decimal_places=2)
     price_per_unit_wholesale = models.DecimalField(max_digits=6,decimal_places=2)
-    reorder_level = models.IntegerField(null=True)
-    reorder_quantity = models.IntegerField(null=True)
+    reorder_level = models.DecimalField(null=True)
+    reorder_quantity = models.DecimalField(null=True)
