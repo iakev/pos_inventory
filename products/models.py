@@ -2,10 +2,10 @@
 Module that describes models (DATABASE tables) related to products, suppliers
 and Categories. Forming a basis of inventory control through business logic
 """
-
 from io import BytesIO
 from os import name
 from PIL import Image
+import uuid as uuid_lib
 
 from django.db import models
 
@@ -24,7 +24,7 @@ class Category(models.Model):
     thumbnails if not present
     """
     name = models.CharField(max_length=255)
-    slug = models.SlugField()
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
     image = models.ImageField(upload_to='uploads/', blank=True, null=True)
     thumbnail = models.ImageField(upload_to='uploads/', blank=True, null=True)
 
@@ -36,7 +36,7 @@ class Category(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return f"/{self.slug}/"
+        return f"/{self.uuid}/"
     
     def get_image(self):
         if self.image:
@@ -139,7 +139,7 @@ class Product(models.Model):
 
     category = models.ForeignKey(Category, related_name="products", on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    slug = models.SlugField()
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
     code = models.CharField(max_length=255)
     description = models.TextField(blank=True,null=True)
     product_type = models.CharField(max_length=2, choices=ProductType.choices)
@@ -155,6 +155,8 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return f"/{self.uuid}/"
 
 class SupplierProduct(models.Model):
     """
@@ -167,11 +169,16 @@ class Stock(models.Model):
     """
     Class with attributes for inventory management
     """
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
     product_id = models.OneToOneField(Product, primary_key=True, on_delete=models.CASCADE)
     stock_quantity = models.DecimalField(max_digits=10,decimal_places=2,blank=True,default=0.00)
     updated_at = models.DateTimeField(auto_now_add=True)
     cost_per_unit = models.DecimalField(max_digits=6,decimal_places=2)
     price_per_unit_retail = models.DecimalField(max_digits=6,decimal_places=2)
     price_per_unit_wholesale = models.DecimalField(max_digits=6,decimal_places=2)
-    reorder_level = models.DecimalField(null=True)
-    reorder_quantity = models.DecimalField(null=True)
+    reorder_level = models.DecimalField(null=True, max_digits=6, decimal_places=2)
+    reorder_quantity = models.DecimalField(null=True, max_digits=6, decimal_places=2)
+
+    class Meta:
+        verbose_name_plural ='stocks'
+        ordering = ['product_id']
