@@ -5,8 +5,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from products.models import Product, Category
-from .serializers import ProductSerializer, CategorySerializer
+from products.models import Product, Category, Stock
+from .serializers import ProductSerializer, CategorySerializer, StockSerializer
+
 
 class CategoryViewSet(ViewSet):
     """Basic viewset for Category Related Items"""
@@ -54,6 +55,7 @@ class CategoryViewSet(ViewSet):
         category = get_object_or_404(self.queryset, uuid=pk)
         category.delete()
         return Response(status=204)
+
 
 class ProductViewSet(ViewSet):
     """Basic viewset for Product Related Items"""
@@ -111,4 +113,60 @@ class ProductViewSet(ViewSet):
         """Delete an existing product"""
         product = get_object_or_404(self.product_queryset, uuid=pk)
         product.delete()
+        return Response(status=204)
+
+
+class StockViewSet(ViewSet):
+    """ViewSet for Stock  Items"""
+
+    stock_queryset = Stock.objects.all()
+    product_queryset = Product.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        """Return a list of all stock"""
+        serializer = StockSerializer(self.stock_queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """Return a single stock"""
+        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        serializer = StockSerializer(stock)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """Create a new stock"""
+        data = request.data
+        uuid = data.get("product_id", None)
+        if uuid:
+            product = get_object_or_404(self.product_queryset, uuid=uuid)
+            data = request.data
+            data["product_id"] = product.id
+            serializer = StockSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+    def update(self, request, pk=None):
+        """Update an existing stock"""
+        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        serializer = StockSerializer(stock, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def partial_update(self, request, pk=None):
+        """Update an existing stock"""
+        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        serializer = StockSerializer(stock, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def destroy(self, request, pk=None):
+        """Delete an existing stock"""
+        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        stock.delete()
         return Response(status=204)
