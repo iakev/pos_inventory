@@ -67,6 +67,8 @@ class ProductSales(models.Model):
     business_name = models.CharField(max_length=255)
     business_pin = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     # logic for populating price_per_unit according to is_wholesale
 
     # add logic for designating receipt label from sales transactiontype and sales receipt type
@@ -112,6 +114,8 @@ class Sales(models.Model):
     receipt_type = models.CharField(max_length=2, choices = SalesReceiptType.choices)
     transaction_type = models.CharField(max_length=2, choices=TransactionProgress.choices)
     sale_status = models.CharField(max_length=3, choices=TransactionProgress.choices, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name_plural = 'sales'
