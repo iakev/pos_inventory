@@ -1,8 +1,11 @@
 """
 Module illustrating the viewsets for product API's
 """
+from decimal import Decimal
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.viewsets import ViewSet
 
 from products.models import Product, Category, Stock
@@ -83,7 +86,6 @@ class ProductViewSet(ViewSet):
             print(uuid)
             category = get_object_or_404(self.category_queryset, uuid=uuid)
             print(f"the category is {category}")
-            data = request.data
             data['category'] = category.id
             serializer = ProductSerializer(data=data)
         if serializer.is_valid():
@@ -139,7 +141,6 @@ class StockViewSet(ViewSet):
         uuid = data.get("product_id", None)
         if uuid:
             product = get_object_or_404(self.product_queryset, uuid=uuid)
-            data = request.data
             data["product_id"] = product.id
             serializer = StockSerializer(data=data)
         if serializer.is_valid():
@@ -170,3 +171,25 @@ class StockViewSet(ViewSet):
         stock = get_object_or_404(self.stock_queryset, uuid=pk)
         stock.delete()
         return Response(status=204)
+
+    def switch_case(case, product_id, data):
+        """
+        Updating stock quantity according to the stock_movement quantity
+        """
+        stock = get_object_or_404(Stock.objects.all(), product_id=product_id) 
+    
+    @action(detail=True, methods=['POST'])
+    def stock_movement(self, request, pk=None):
+        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+
+        stock_movement_type = request.data.get('stock_movement_type')
+        stock_movement_quantity = request.data.get('stock_movement_quantity')
+        stock_movement_remarks = request.data.get('stock_movement_remarks')
+        print(request.data)
+        if stock_movement_type:
+            stock.update_stock_quantity(stock_movement_type, stock_movement_quantity, stock_movement_remarks)
+            serializer = StockSerializer(stock, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            return Response(serializer.data)
+        return Response({'error': 'No stock movement type given'}, status=400)
