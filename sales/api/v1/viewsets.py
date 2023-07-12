@@ -7,8 +7,13 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from products.models import Product
-from sales.models import PaymentMode, ProductSales, Sales
-from .serializers import PaymentModeSerializer, ProductSalesSerializer, SalesSerializer
+from sales.models import PaymentMode, ProductSales, Sales, Customer
+from .serializers import (
+    PaymentModeSerializer,
+    ProductSalesSerializer,
+    SalesSerializer,
+    CustomerSerializer,
+)
 
 
 class SalesViewSet(ViewSet):
@@ -16,7 +21,8 @@ class SalesViewSet(ViewSet):
     API endpoint that allows Sales to be viewed or edited.
     """
 
-    queryset = Sales.objects.all()
+    sales_queryset = Sales.objects.all()
+    customer_queryset = Sales.objects.all()
 
     def list(self, request, *args, **kwargs):
         """
@@ -33,6 +39,7 @@ class SalesViewSet(ViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new Sale"""
+
         serializer = SalesSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -141,3 +148,52 @@ class ProductSalesViewset(ViewSet):
         product_sales = get_list_or_404(self.product_sales_queryset, product=product.id)
         serializer = ProductSalesSerializer(product_sales, many=True)
         return Response(serializer.data)
+
+
+class CustomerViewset(ViewSet):
+    """API endpoint that allows customer to be viewed or edited"""
+
+    queryset = Customer.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        """Returns a list of Customer"""
+        serializer = CustomerSerializer(self.queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """Retrieves a Customer given its associated identifier"""
+        customer = get_object_or_404(self.queryset, uuid=pk)
+        serializer = CustomerSerializer(customer)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """Creates a  new customer"""
+        serializer = CustomerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+    def update(self, request, pk=None):
+        """Updates a Customer given its associated identifier"""
+        customer = get_object_or_404(self.queryset, uuid=pk)
+        serializer = CustomerSerializer(customer, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def partial_update(self, request, pk=None):
+        """updates a customer partially given it's identifier"""
+        customer = get_object_or_404(self.queryset, uuid=pk)
+        serializer = CustomerSerializer(customer, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def destroy(self, request, pk=None):
+        """deletes an existing Customer"""
+        customer = get_object_or_404(self.queryset, uuid=pk)
+        customer.delete()
+        return Response(status=204)

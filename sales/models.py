@@ -7,10 +7,24 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
-from administration.models import Business, Employee, Customer
+from administration.models import Business, Employee
 from products.models import Product
 
 # Create your models here.
+
+
+class Customer(models.Model):
+    """
+    Models the product buyer information all optional
+    """
+
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
+    tax_pin = models.CharField(max_length=255, null=True, blank=True)
+    email_address = models.CharField(max_length=255, null=True, blank=True)
 
 
 class PaymentMode(models.Model):

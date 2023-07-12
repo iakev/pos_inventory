@@ -1,13 +1,14 @@
 """
 Module illustrating the viewsets for administration API's
 """
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from administration.models import Business, Customer, Employee
-from .serializers import BusinessSerializer, CustomerSerializer, EmployeeSerializer
+from administration.models import Business, Employee
+from .serializers import BusinessSerializer, EmployeeSerializer
 
 
 class BusinessViewset(ViewSet):
@@ -28,14 +29,22 @@ class BusinessViewset(ViewSet):
 
     def create(self, request, *args, **kwargs):
         """Creates a  new business"""
-        serializer = BusinessSerializer(data=request.data)
+        print("creating a new business")
+        data = request.data
+        print(data)
+        serializer = BusinessSerializer(data=data)
+        print("befor the serailizer validates")
         if serializer.is_valid():
+            print("serializer valid before saving")
             serializer.save()
+            print("after save method of serializer called")
             return Response(serializer.data, status=201)
+        print("serializer invalid")
         return Response(serializer.errors, status=400)
 
     def update(self, request, pk=None):
         """Updates a business given its associated identifier"""
+        print("updating a business")
         business = get_object_or_404(self.queryset, uuid=pk)
         serializer = BusinessSerializer(business, data=request.data)
         if serializer.is_valid():
@@ -56,55 +65,6 @@ class BusinessViewset(ViewSet):
         """deletes an existing business"""
         business = get_object_or_404(self.queryset, uuid=pk)
         business.delete()
-        return Response(status=204)
-
-
-class CustomerViewset(ViewSet):
-    """API endpoint that allows customer to be viewed or edited"""
-
-    queryset = Customer.objects.all()
-
-    def list(self, request, *args, **kwargs):
-        """Returns a list of Customer"""
-        serializer = CustomerSerializer(self.queryset, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, pk=None):
-        """Retrieves a Customer given its associated identifier"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
-        serializer = CustomerSerializer(customer)
-        return Response(serializer.data)
-
-    def create(self, request, *args, **kwargs):
-        """Creates a  new customer"""
-        serializer = CustomerSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
-
-    def update(self, request, pk=None):
-        """Updates a Customer given its associated identifier"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
-        serializer = CustomerSerializer(customer, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
-
-    def partial_update(self, request, pk=None):
-        """updates a customer partially given it's identifier"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
-        serializer = CustomerSerializer(customer, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=400)
-
-    def destroy(self, request, pk=None):
-        """deletes an existing Customer"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
-        customer.delete()
         return Response(status=204)
 
 
@@ -143,11 +103,14 @@ class EmployeeViewset(ViewSet):
 
     def partial_update(self, request, pk=None):
         """updates a employee partially given it's identifier"""
+        print("partial employee update")
         employee = get_object_or_404(self.queryset, uuid=pk)
         serializer = EmployeeSerializer(employee, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            print("employee serializer valid")
+            employee = serializer.update(employee, serializer.validated_data)
             return Response(serializer.data)
+        print("employee invalid")
         return Response(serializer.errors, status=400)
 
     def destroy(self, request, pk=None):

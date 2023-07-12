@@ -1,6 +1,6 @@
-from sales.api.v1.viewsets import SalesViewSet, ProductSalesViewset
+from sales.api.v1.viewsets import SalesViewSet, ProductSalesViewset, CustomerViewset
 from products.api.v1.viewsets import ProductViewSet, CategoryViewSet, StockViewSet
-from administration.api.v1.viewsets import BusinessViewset, CustomerViewset, EmployeeViewset
+from administration.api.v1.viewsets import BusinessViewset, EmployeeViewset
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
