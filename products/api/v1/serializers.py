@@ -31,6 +31,27 @@ class ProductSerializer(serializers.ModelSerializer):
             "packaging_unit",
         ]
 
+    def create(self, validated_data):
+        """create a new product"""
+        product = Product(**validated_data)
+        product.save()
+        return product
+
+    def update(self, product, validated_data):
+        """Update a product"""
+        product.category = validated_data.get("category", product.category)
+        product.name = validated_data.get("name", product.name)
+        product.description = validated_data.get("description", product.description)
+        product.product_type = validated_data.get("product_type", product.product_type)
+        product.code = validated_data.get("code", product.code)
+        product.tax_type = validated_data.get("tax_type", product.tax_type)
+        product.packaging_unit = validated_data.get("packaging_unit", product.packaging_unit)
+        product.unit = validated_data.get("unit", product.unit)
+        product.limited = validated_data.get("limited", product.limited)
+        product.active_for_sale = validated_data.get("active_for_sale", product.active_for_sale)
+        product.save()
+        return product
+
 
 class CategorySerializer(serializers.ModelSerializer):
     """
@@ -105,6 +126,10 @@ class SupplierSerializer(serializers.ModelSerializer):
     Serializer for Supplier model
     """
 
+    products = ProductSerializer(many=True, read_only=True)
+    #products = serializers.ListField(child=serializers.BooleanField())
+
+
     class Meta:
         model = Supplier
         fields = [
@@ -117,6 +142,33 @@ class SupplierSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+    def create(self, validated_data):
+        """create and validate a supplier instance"""
+        print("validate data", validated_data)
+        product_data = self.initial_data.get("products")
+        supplier = Supplier.objects.create(**validated_data)
+        if product_data:
+            for product in product_data:
+                supplier.products.add(product)
+        return supplier
+
+    def update(self, supplier, validated_data):
+        """updates a supplier"""
+        product_data = validated_data.pop("products")
+        if product_data:
+            supplier.products.clear()
+            for product in product_data:
+                supplier.products.add(product)
+        supplier.name = validated_data.get("name", supplier.name)
+        supplier.address = validated_data.get("address", supplier.address)
+        supplier.email_address = validated_data.get("email_address", supplier.email_address)
+        supplier.phone_number = validated_data.get("phone_number", supplier.phone_number)
+        supplier.save()
+        return supplier
+    
+
 
 
 class SupplierProductSerializer(serializers.ModelSerializer):

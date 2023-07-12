@@ -1,13 +1,21 @@
 """
 Module illustrating the viewsets for product API's
 """
-from django.shortcuts import get_object_or_404
+from administration.models import Supplier
+from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from products.models import Product, Category, Stock
-from .serializers import ProductSerializer, CategorySerializer, StockSerializer
+from products.models import Product, Category, Stock, SupplierProduct
+from sales.models import Sales
+from .serializers import (
+    ProductSerializer,
+    CategorySerializer,
+    StockSerializer,
+    SupplierSerializer,
+    SupplierProductSerializer,
+)
 
 
 class CategoryViewSet(ViewSet):
@@ -183,11 +191,148 @@ class StockViewSet(ViewSet):
         stock_movement_remarks = request.data.get("stock_movement_remarks")
         print(request.data)
         if stock_movement_type:
-            stock.update_stock_quantity(
-                stock_movement_type, stock_movement_quantity, stock_movement_remarks
-            )
+            stock.update_stock_quantity(stock_movement_type, stock_movement_quantity, stock_movement_remarks)
             serializer = StockSerializer(stock, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
             return Response(serializer.data)
         return Response({"error": "No stock movement type given"}, status=400)
+
+
+class SupplierProductViewSet(ViewSet):
+    """
+    API endpoint that allows suppliers to be viewed or edited.
+    """
+
+    product_queryset = Product.objects.all()
+    supplier_queryset = Sales.objects.all()
+    supplier_product_queryset = SupplierProduct.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        """
+        List all supplier products
+        """
+        serializer = SupplierProductSerializer(self.supplier_product_queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """
+        Retun a single ProductSale
+        """
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+        serializer = SupplierProductSerializer(product_sale)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """Create a new ProductSale"""
+        serializer = SupplierProductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    def update(self, request, pk=None):
+        """Update a ProductSale"""
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+        serializer = SupplierProductSerializer(product_sale, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    def partial_update(self, request, pk=None):
+        """Update a ProductSale"""
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+        serializer = SupplierProductSerializer(product_sale, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    def destroy(self, request, pk=None):
+        """Delete a ProductSale"""
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+        product_sale.delete()
+        return Response(status=204)
+
+    @action(detail=False, methods=["GET"])
+    def list_all_supplier_products(self, request, pk=None):
+        """
+        List all ProductSales for a Sale
+        """
+        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        supplier_products = get_list_or_404(self.supplier_product_queryset, supplier=supplier.id)
+        serializer = SupplierProductSerializer(supplier_products, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["GET"])
+    def list_all_product_supplier(self, request, pk=None):
+        """
+        List all sales associated with a Product
+        """
+        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product_supplier = get_list_or_404(self.supplier_product_queryset, product=product.id)
+        serializer = SupplierProductSerializer(product_supplier, many=True)
+        return Response(serializer.data)
+
+
+class SupplierViewSet(ViewSet):
+    """API endpoit that allows Suppliers to be viewed and edited"""
+
+    supplier_queryset = Supplier.objects.all()
+    product_queryset = Product.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        """Return a list of all suppliers"""
+        serializer = SupplierSerializer(self.supplier_queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """Return a single supplier"""
+        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        serializer = SupplierSerializer(supplier)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """Create a new supplier"""
+        print(request.data)
+        data = request.data
+        product_uuids = data.pop('products')
+        print(product_uuids)
+        product_ids = []
+        for uuid in product_uuids:
+            product = get_object_or_404(self.product_queryset, uuid=uuid)
+            print(uuid, product)
+            product_ids.append(product.id)
+        print(product_ids)
+        data['products'] = product_ids
+        serializer = SupplierSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+       
+
+    def update(self, request, pk=None):
+        """Update an existing supplier"""
+        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        serializer = SupplierSerializer(supplier, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def partial_update(self, request, pk=None):
+        """Update an existing supplier partially"""
+        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        serializer = SupplierSerializer(supplier, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def destroy(self, request, pk=None):
+        """Delete an existing supplier"""
+        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        supplier.delete()
+        return Response(status=204)

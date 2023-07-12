@@ -1,5 +1,12 @@
 from sales.api.v1.viewsets import SalesViewSet, ProductSalesViewset, CustomerViewset
 from products.api.v1.viewsets import ProductViewSet, CategoryViewSet, StockViewSet
+from products.api.v1.viewsets import (
+    ProductViewSet,
+    CategoryViewSet,
+    StockViewSet,
+    SupplierViewSet,
+    SupplierProductViewSet,
+)
 from administration.api.v1.viewsets import BusinessViewset, EmployeeViewset
 from rest_framework.routers import DefaultRouter
 
@@ -12,5 +19,7 @@ router.register(r"productsales", ProductSalesViewset, basename="productsales")
 router.register(r"business", BusinessViewset, basename="business")
 router.register(r"customer", CustomerViewset, basename="customer")
 router.register(r"employee", EmployeeViewset, basename="employee")
+router.register(r"suppliers", SupplierViewSet, basename="supplier")
+router.register(r"supplier_products", SupplierProductViewSet, basename="supplier_products")
 
 urlpatterns = router.urls
