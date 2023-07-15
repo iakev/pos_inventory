@@ -1,4 +1,9 @@
-from sales.api.v1.viewsets import SalesViewSet, ProductSalesViewset, CustomerViewset
+from sales.api.v1.viewsets import (
+    SalesViewSet,
+    ProductSalesViewset,
+    CustomerViewset,
+    PaymentModeViewSet,
+)
 from products.api.v1.viewsets import ProductViewSet, CategoryViewSet, StockViewSet
 from products.api.v1.viewsets import (
     ProductViewSet,
@@ -17,9 +22,12 @@ router.register(r"categories", CategoryViewSet, basename="categories")
 router.register(r"stocks", StockViewSet, basename="stock")
 router.register(r"productsales", ProductSalesViewset, basename="productsales")
 router.register(r"business", BusinessViewset, basename="business")
-router.register(r"customer", CustomerViewset, basename="customer")
-router.register(r"employee", EmployeeViewset, basename="employee")
+router.register(r"customers", CustomerViewset, basename="customers")
+router.register(r"employees", EmployeeViewset, basename="employees")
 router.register(r"suppliers", SupplierViewSet, basename="supplier")
-router.register(r"supplier_products", SupplierProductViewSet, basename="supplier_products")
+router.register(
+    r"supplierproducts", SupplierProductViewSet, basename="supplierproducts"
+)
+router.register(r"paymentmodes", PaymentModeViewSet, basename="paymentmodes")
 
 urlpatterns = router.urls

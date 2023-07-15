@@ -1,6 +1,7 @@
 """
 Module for creating serializerd for Sales application models
 """
+from typing import Any
 from rest_framework import serializers
 
 from administration.models import Business, Employee
@@ -8,7 +9,6 @@ from administration.api.v1.serializers import BusinessSerializer, EmployeeSerial
 from sales.models import PaymentMode, ProductSales, Sales, Customer
 from products.models import Product
 from products.api.v1.serializers import ProductSerializer
-from sales.models import Sales
 
 
 class SalesSerializer(serializers.ModelSerializer):
@@ -27,11 +27,11 @@ class SalesSerializer(serializers.ModelSerializer):
             "payment_id",
             "cashier_id",
             "products",
-            "time_created",
             "sale_amount_with_tax",
             "tax_amount",
             "receipt_type",
             "transaction_type",
+            "receipt_label",
             "sale_status",
             "created_at",
             "updated_at",
@@ -43,38 +43,60 @@ class ProductSalesSerializer(serializers.ModelSerializer):
     Serializer for ProductSales model
     """
 
-    products = ProductSerializer(many=True, read_only=True)
-    sales = SalesSerializer(many=True, read_only=True)
+    # products = ProductSerializer(many=True, read_only=True)
+    # sales = SalesSerializer(many=True, read_only=True)
 
     class Meta:
         model = ProductSales
         fields = [
             "uuid",
-            "products",
-            "sales",
+            "product",
+            "sale",
             "quantity_sold",
             "price_per_unit",
             "is_wholesale",
             "price",
             "tax_amount",
-            "receipt_label",
             "tax_rate",
-            "business_name",
-            "business_pin",
-            "address",
             "created_at",
             "updated_at",
         ]
 
 
-class PaymentModeSerializer(serializers.Serializer):
+class PaymentModeSerializer(serializers.ModelSerializer):
     """
     Serializer for PaymentMode model
     """
 
+    properties = serializers.JSONField(required=False)
+
     class Meta:
         model = PaymentMode
-        fileds = ["uuid", "mode", "properties"]
+        fields = ["uuid", "mode", "properties"]
+
+    def create(self, validated_data):
+        """Create a new payment mode"""
+        print(f"calling PaymentSerializer create method with {validated_data}")
+        properties = validated_data.pop(
+            "properties", {}
+        )  # Get the properties data or an empty dictionary if not provided
+        print(f"we have properties as {properties}")
+        payment_mode = PaymentMode(**validated_data)
+        print(f"we have payment_mode as {payment_mode}")
+        payment_mode.properties = properties
+        payment_mode.save()
+        return payment_mode
+
+    def update(self, payment, validated_data):
+        """Update a payment mode instance"""
+        properties_data = validated_data.pop(
+            "properties", None
+        )  # Get the properties data or an empty dictionary if not provided
+        if properties_data:
+            payment.properties = properties_data
+        payment.mode = validated_data.get("mode", payment.mode)
+        payment.save()
+        return payment
 
 
 class CustomerSerializer(serializers.ModelSerializer):

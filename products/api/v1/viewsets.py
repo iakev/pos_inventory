@@ -21,7 +21,9 @@ from .serializers import (
 class CategoryViewSet(ViewSet):
     """Basic viewset for Category Related Items"""
 
-    queryset = Category.objects.all()
+    @property
+    def queryset(self):
+        return Category.objects.all()
 
     def list(self, request, *args, **kwargs):
         """Return a list of all categories"""
@@ -70,8 +72,13 @@ class CategoryViewSet(ViewSet):
 class ProductViewSet(ViewSet):
     """Basic viewset for Product Related Items"""
 
-    product_queryset = Product.objects.all()
-    category_queryset = Category.objects.all()
+    @property
+    def product_queryset(self):
+        return Product.objects.all()
+
+    @property
+    def category_queryset(self):
+        return Category.objects.all()
 
     def list(self, request, *args, **kwargs):
         """Return a list of all products"""
@@ -125,8 +132,13 @@ class ProductViewSet(ViewSet):
 class StockViewSet(ViewSet):
     """ViewSet for Stock  Items"""
 
-    stock_queryset = Stock.objects.all()
-    product_queryset = Product.objects.all()
+    @property
+    def stock_queryset(self):
+        return Stock.objects.all()
+
+    @property
+    def product_queryset(self):
+        return Product.objects.all()
 
     def list(self, request, *args, **kwargs):
         """Return a list of all stock"""
@@ -191,7 +203,9 @@ class StockViewSet(ViewSet):
         stock_movement_remarks = request.data.get("stock_movement_remarks")
         print(request.data)
         if stock_movement_type:
-            stock.update_stock_quantity(stock_movement_type, stock_movement_quantity, stock_movement_remarks)
+            stock.update_stock_quantity(
+                stock_movement_type, stock_movement_quantity, stock_movement_remarks
+            )
             serializer = StockSerializer(stock, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
@@ -204,15 +218,25 @@ class SupplierProductViewSet(ViewSet):
     API endpoint that allows suppliers to be viewed or edited.
     """
 
-    product_queryset = Product.objects.all()
-    supplier_queryset = Sales.objects.all()
-    supplier_product_queryset = SupplierProduct.objects.all()
+    @property
+    def supplier_queryset(self):
+        return Sales.objects.all()
+
+    @property
+    def product_queryset(self):
+        return Product.objects.all()
+
+    @property
+    def supplier_product_queryset(self):
+        return SupplierProduct.objects.all()
 
     def list(self, request, *args, **kwargs):
         """
         List all supplier products
         """
-        serializer = SupplierProductSerializer(self.supplier_product_queryset, many=True)
+        serializer = SupplierProductSerializer(
+            self.supplier_product_queryset, many=True
+        )
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
@@ -243,7 +267,9 @@ class SupplierProductViewSet(ViewSet):
     def partial_update(self, request, pk=None):
         """Update a ProductSale"""
         product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
-        serializer = SupplierProductSerializer(product_sale, data=request.data, partial=True)
+        serializer = SupplierProductSerializer(
+            product_sale, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
@@ -261,7 +287,9 @@ class SupplierProductViewSet(ViewSet):
         List all ProductSales for a Sale
         """
         supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
-        supplier_products = get_list_or_404(self.supplier_product_queryset, supplier=supplier.id)
+        supplier_products = get_list_or_404(
+            self.supplier_product_queryset, supplier=supplier.id
+        )
         serializer = SupplierProductSerializer(supplier_products, many=True)
         return Response(serializer.data)
 
@@ -271,7 +299,9 @@ class SupplierProductViewSet(ViewSet):
         List all sales associated with a Product
         """
         product = get_object_or_404(self.product_queryset, uuid=pk)
-        product_supplier = get_list_or_404(self.supplier_product_queryset, product=product.id)
+        product_supplier = get_list_or_404(
+            self.supplier_product_queryset, product=product.id
+        )
         serializer = SupplierProductSerializer(product_supplier, many=True)
         return Response(serializer.data)
 
@@ -279,8 +309,13 @@ class SupplierProductViewSet(ViewSet):
 class SupplierViewSet(ViewSet):
     """API endpoit that allows Suppliers to be viewed and edited"""
 
-    supplier_queryset = Supplier.objects.all()
-    product_queryset = Product.objects.all()
+    @property
+    def supplier_queryset(self):
+        return Supplier.objects.all()
+
+    @property
+    def product_queryset(self):
+        return Product.objects.all()
 
     def list(self, request, *args, **kwargs):
         """Return a list of all suppliers"""
@@ -297,7 +332,7 @@ class SupplierViewSet(ViewSet):
         """Create a new supplier"""
         print(request.data)
         data = request.data
-        product_uuids = data.pop('products')
+        product_uuids = data.pop("products")
         print(product_uuids)
         product_ids = []
         for uuid in product_uuids:
@@ -305,13 +340,12 @@ class SupplierViewSet(ViewSet):
             print(uuid, product)
             product_ids.append(product.id)
         print(product_ids)
-        data['products'] = product_ids
+        data["products"] = product_ids
         serializer = SupplierSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
-       
 
     def update(self, request, pk=None):
         """Update an existing supplier"""

@@ -29,14 +29,10 @@ class Customer(models.Model):
 
 class PaymentMode(models.Model):
     """
-    Models the allowed payment Types
+    Models the allowed payment types
     """
 
     class PaymentMethod(models.TextChoices):
-        """
-        Enums for payment methods and their codes
-        """
-
         CASH = "01", _("CASH")
         CREDIT = "02", _("CREDIT")
         CASH_CREDIT = "03", _("CASH/CREDIT")
@@ -46,54 +42,28 @@ class PaymentMode(models.Model):
         OTHER = "07", _("OTHER")
 
     uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
-    mode = models.CharField(max_length=3, choices=PaymentMethod.choices)
-    properties = models.JSONField()
-
-    # TODO: mode is cash
-    # properties = {
-    #     till: {1: 0, 5: 0, 10:0, 20:0, 50:0, 100: 0},
-    #     issued_amount: int,
-    #     change_due: int,
-    # }
-
-    # mode is credit
-    # properties = {
-    #     customer_id: customer,
-    #     date_due
-    #     desctiption
-    # }
-    # properties = {
-
-    # }
-
-    # Logic to populate properties according to mode and then save to database
-
-
-class ProductSales(models.Model):
-    """
-    Models the through Table of Product to Sales many to many
-    """
-
-    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
-    products = models.ForeignKey(
-        Product, related_name="products", on_delete=models.CASCADE
+    payment_method = models.CharField(
+        max_length=2, choices=PaymentMethod.choices, default=PaymentMethod.CASH
     )
-    sales = models.ForeignKey("Sales", related_name="sales", on_delete=models.CASCADE)
-    quantity_sold = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    is_wholesale = models.BooleanField(default=False)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    receipt_label = models.CharField(max_length=5)
-    tax_rate = models.CharField(max_length=5)
-    business_name = models.CharField(max_length=255)
-    business_pin = models.CharField(max_length=255)
-    address = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    # logic for populating price_per_unit according to is_wholesale
+    properties = models.JSONField(null=True, blank=True)
 
-    # add logic for designating receipt label from sales transactiontype and sales receipt type
+    class Meta:
+        verbose_name = _("Payment Mode")
+
+    def __str__(self):
+        return str(self.payment_method)
+
+    def __str__(self):
+        payment_method_labels = {
+            self.PaymentMethod.CASH: "CASH",
+            self.PaymentMethod.CREDIT: "CREDIT",
+            self.PaymentMethod.CASH_CREDIT: "CASH/CREDIT",
+            self.PaymentMethod.BANK_CHECK: "BANK CHECK",
+            self.PaymentMethod.CARD: "DEBIT AND CREDIT CARD",
+            self.PaymentMethod.MOBILE_MONEY: "MOBILE MONEY",
+            self.PaymentMethod.OTHER: "OTHER",
+        }
+        return payment_method_labels.get(self.payment_method, "")
 
 
 class Sales(models.Model):
@@ -121,7 +91,7 @@ class Sales(models.Model):
         SALE = "S", _("Sale")
         CREDIT_NOTE = "C", _("Credit Note")
 
-    class TransactionType(models.Model):
+    class TransactionType(models.TextChoices):
         """
         Enums for the TransactionType model
         """
@@ -136,34 +106,65 @@ class Sales(models.Model):
         Customer, related_name="sales", on_delete=models.CASCADE, null=True, blank=True
     )
     business_id = models.OneToOneField(
-        Business, related_name="sale", on_delete=models.CASCADE
+        Business, related_name="sale", on_delete=models.CASCADE, null=True, blank=True
     )
-    payment_id = models.OneToOneField(
-        PaymentMode, related_name="sale", on_delete=models.CASCADE
+    payment_id = models.ForeignKey(
+        PaymentMode,
+        related_name="sales",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     cashier_id = models.ForeignKey(
-        Employee, related_name="sales", on_delete=models.CASCADE
+        Employee, related_name="sales", on_delete=models.CASCADE, null=True, blank=True
     )
     products = models.ManyToManyField(
-        Product, related_name="sales", through=ProductSales
+        Product, related_name="sales", through="ProductSales"
     )
-    time_created = models.DateTimeField(auto_now=True)
     sale_amount_with_tax = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00, blank=True
+        max_digits=10, decimal_places=2, default=0.00
     )
     tax_amount = models.DecimalField(
         max_digits=10, blank=True, default=0.00, decimal_places=2
     )
     receipt_type = models.CharField(max_length=2, choices=SalesReceiptType.choices)
-    transaction_type = models.CharField(
-        max_length=2, choices=TransactionProgress.choices
-    )
+    transaction_type = models.CharField(max_length=2, choices=TransactionType.choices)
     sale_status = models.CharField(
         max_length=3, choices=TransactionProgress.choices, null=True, blank=True
     )
+    receipt_label = models.CharField(max_length=5)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name_plural = "sales"
-        ordering = ["time_created"]
+        ordering = ["created_at", "updated_at"]
+
+    def get_absolute_url(self):
+        return f"/sales/{self.uuid}"
+
+    def __str__(self):
+        return f"{self.uuid}"
+
+
+class ProductSales(models.Model):
+    """
+    Models the through Table of Product to Sales many to many
+    """
+
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    product = models.ForeignKey(
+        Product, related_name="product_sales", on_delete=models.CASCADE
+    )
+    sale = models.ForeignKey(
+        Sales, related_name="product_sales", on_delete=models.CASCADE
+    )
+    quantity_sold = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_wholesale = models.BooleanField(default=False)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    tax_rate = models.CharField(max_length=5)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    # logic for populating price_per_unit according to is_wholesale

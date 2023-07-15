@@ -14,7 +14,9 @@ from .serializers import BusinessSerializer, EmployeeSerializer
 class BusinessViewset(ViewSet):
     """API endpoint that allows Business to be viewed or edited"""
 
-    queryset = Business.objects.all()
+    @property
+    def queryset(self):
+        return Business.objects.all()
 
     def list(self, request, *args, **kwargs):
         """Returns a list of business"""
@@ -71,7 +73,9 @@ class BusinessViewset(ViewSet):
 class EmployeeViewset(ViewSet):
     """API endpoint that allows employee to be viewed or edited"""
 
-    queryset = Employee.objects.all()
+    @property
+    def queryset(self):
+        return Employee.objects.all()
 
     def list(self, request, *args, **kwargs):
         """Returns a list of employee"""
