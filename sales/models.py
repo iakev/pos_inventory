@@ -146,6 +146,72 @@ class Sales(models.Model):
     def __str__(self):
         return f"{self.uuid}"
 
+    def reset_till(self):
+        """
+        Reset the cash register
+        """
+        reset_dict = {1: 0, 5: 0, 10: 0, 20: 0, 50: 0, 100: 0, 200: 0, 500: 0, 1000: 0}
+
+        # Copy reset_dict values to properties field
+        self.properties.update(reset_dict)
+        self.save()
+
+    def generate_change(self, sale_amount, amount_paid):
+        """
+        Generate the change to be given
+        """
+        properties = self.properties
+
+        # Calculate the total cash in the till
+        total_cash = sum(
+            denomination * quantity for denomination, quantity in properties.items()
+        )
+
+        change = amount_paid - sale_amount
+        if change >= 0:
+            # Update the denominations in the till
+            denominations = sorted(properties.keys(), reverse=True)
+            remaining_change = change
+
+            for denomination in denominations:
+                quantity = properties[denomination]
+                num_denominations = remaining_change // denomination
+
+                if num_denominations <= quantity:
+                    properties[denomination] -= num_denominations
+                    remaining_change -= num_denominations * denomination
+                else:
+                    properties[denomination] = 0
+                    remaining_change -= quantity * denomination
+
+                if remaining_change == 0:
+                    break
+
+            # Save the updated properties
+            self.properties = properties
+            self.save()
+
+            return change
+        else:
+            return 0
+
+    def break_down_denominiations(self, denominations):
+        """
+        Breakdown demoniations when given as a list of tuples
+        containing the denominiation and the wanted denominations respectively
+        """
+        properties = self.properties
+        till = properties
+        for denom, wanted_denoms in denominations:
+            if denom in till.keys():
+                till[denom] -= 1
+                amount_to_break += denom * 1
+            for denoms, quantity in wanted_denoms.items():
+                till[denoms] += quantity
+                change_so_far += denoms * quantity
+        self.properties = till
+        self.save()
+
 
 class ProductSales(models.Model):
     """
