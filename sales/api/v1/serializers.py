@@ -76,13 +76,10 @@ class PaymentModeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create a new payment mode"""
-        print(f"calling PaymentSerializer create method with {validated_data}")
         properties = validated_data.pop(
             "properties", {}
         )  # Get the properties data or an empty dictionary if not provided
-        print(f"we have properties as {properties}")
         payment_mode = PaymentMode(**validated_data)
-        print(f"we have payment_mode as {payment_mode}")
         payment_mode.properties = properties
         payment_mode.save()
         return payment_mode

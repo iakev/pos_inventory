@@ -13,6 +13,7 @@ from products.api.v1.viewsets import (
     SupplierProductViewSet,
 )
 from administration.api.v1.viewsets import BusinessViewset, EmployeeViewset
+from pos_inventory.users.api.viewsets import UserViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -29,5 +30,6 @@ router.register(
     r"supplierproducts", SupplierProductViewSet, basename="supplierproducts"
 )
 router.register(r"paymentmodes", PaymentModeViewSet, basename="paymentmodes")
+router.register(r"users", UserViewSet, basename="users")
 
 urlpatterns = router.urls

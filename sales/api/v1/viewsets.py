@@ -128,13 +128,25 @@ class SalesViewSet(ViewSet):
             receipt_data["product_info"]["name"] = product_sale.product.name
             receipt_data["product_info"][
                 "description"
-            ] = product_sales.product.description
+            ] = product_sale.product.description
             receipt_data["product_info"]["unit_price"] = product_sale.price_per_unit
             receipt_data["product_info"]["quantity"] = product_sale.quantity_sold
-            receipt_data["product_info"]["total_price"] = product_sale.price
+            receipt_data["product_info"][
+                "total_amount_without_tax"
+            ] = product_sale.price
             receipt_data["product_info"][
                 "tax-designation"
             ] = product_sale.product.tax_type
+            receipt_data["product_info"]["Total Tax"] = product_sale.sale.tax_amount
+            receipt_data["product_info"][
+                "Total amount paid"
+            ] = product_sale.sale.sale_amount_with_tax
+
+        if (
+            payment_mode == PaymentMode.PaymentMethod.CASH
+            or payment_mode == PaymentMode.PaymentMethod.CASH_CREDIT
+        ):
+            pass
 
 
 class ProductSalesViewset(ViewSet):
