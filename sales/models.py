@@ -153,21 +153,25 @@ class Sales(models.Model):
         reset_dict = {1: 0, 5: 0, 10: 0, 20: 0, 50: 0, 100: 0, 200: 0, 500: 0, 1000: 0}
 
         # Copy reset_dict values to properties field
-        self.properties.update(reset_dict)
-        self.save()
+        if self.payment_id:
+            self.payment_id.properties.update(reset_dict)
+            self.payment_id.save()
 
     def generate_change(self, sale_amount, amount_paid):
         """
         Generate the change to be given
         """
-        properties = self.properties
+        properties = self.payment_id.properties
 
         # Calculate the total cash in the till
         total_cash = sum(
-            denomination * quantity for denomination, quantity in properties.items()
+            int(denomination) * quantity
+            for denomination, quantity in properties.items()
         )
 
         change = amount_paid - sale_amount
+        if total_cash == 0:
+            return change
         if change >= 0:
             # Update the denominations in the till
             denominations = sorted(properties.keys(), reverse=True)
@@ -200,7 +204,7 @@ class Sales(models.Model):
         Breakdown demoniations when given as a list of tuples
         containing the denominiation and the wanted denominations respectively
         """
-        properties = self.properties
+        properties = self.payment_id.properties
         till = properties
         for denom, wanted_denoms in denominations:
             if denom in till.keys():
