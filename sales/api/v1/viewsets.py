@@ -1,6 +1,12 @@
 """
 Model defining viewsets for Sales API's
 """
+from datetime import datetime
+from decimal import Decimal, ROUND_HALF_EVEN
+from django.shortcuts import get_object_or_404, get_list_or_404
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
 from decimal import Decimal, ROUND_HALF_EVEN
 from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.decorators import action
@@ -114,6 +120,7 @@ class SalesViewSet(ViewSet):
         product sale object
         """
         payment_mode = request.data.get("payment_mode")
+        amount_paid = request.data.get("amount_paid")
         sale = get_object_or_404(self.sales_queryset, uuid=pk)
         business = get_object_or_404(Business, id=sale.business)
         product_sales = sale.product_sales.all()
@@ -140,14 +147,103 @@ class SalesViewSet(ViewSet):
             ] = product_sale.product.tax_type
             receipt_data["product_info"]["Total Tax"] = product_sale.sale.tax_amount
             receipt_data["product_info"][
-                "Total amount paid"
+                "Sale Amount with Tax"
             ] = product_sale.sale.sale_amount_with_tax
+            receipt_data["Total amount paid"] = amount_paid
 
         if (
             payment_mode == PaymentMode.PaymentMethod.CASH
             or payment_mode == PaymentMode.PaymentMethod.CASH_CREDIT
         ):
-            pass
+            receipt_data["change"] = sale.generate_change(
+                receipt_data["Sale Amount with tax"], amount_paid
+            )
+        return Response(receipt_data)
+
+    @action(detail=True, methods=["POST"])
+    def break_down_denomination(self, request, pk=None):
+        """
+        Breakdown denomination when there is no change available
+        """
+        sale = get_object_or_404(self.sales_queryset, uuid=pk)
+        denominations = request.denominations
+        sale.break_down_denominiations(denominations)
+
+    @action(detail=False, methods=["POST"])
+    def generate_sales_report(self, request, *args, **kwargs):
+        """
+        Generate sales report based on date given
+        """
+        data = request.data
+        start_date = data.get("start_date", None)
+        end_date = data.get("end_date", None)
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        else:
+            return Response(
+                {"message": "Please provide a start date and end date"},
+                status=400,
+            )
+        sales_summary = Sales.objects.filter(
+            created_at__date__range=[start_date, end_date]
+        )
+        if not sales_summary:
+            return Response(
+                {"message": "No sales found for the given date range"},
+                status=400,
+            )
+        report = {
+            "total_sales": 0,
+            "tax_amount": 0,
+            "profit": 0,
+            "sales_report": [],
+        }
+        for sale in sales_summary:
+            summary = {
+                "cashier_id": sale.cashier_id.id if sale.cashier_id else None,
+                "payment_id": sale.payment_id.id if sale.payment_id else None,
+                "receipt_label": sale.receipt_label,
+                "sale_amount": sale.sale_amount_with_tax,
+                "products": [],
+            }
+            total_tax = 0
+            total_sales = 0
+            total_profit = 0
+
+            product_sales = sale.product_sales.all()
+            for product_sale in product_sales:
+                product = product_sale.product
+                stock = get_object_or_404(Stock, pk=product_sale.product.id)
+                product_info = {
+                    "product_name": product.name,
+                    "product_description": product.description,
+                    "product_unit_price": product_sale.price_per_unit,
+                    "product_quantity": product_sale.quantity_sold,
+                    "product_price": product_sale.price,
+                    "tax_type": product.tax_type,
+                    "product_tax": product_sale.tax_amount,
+                    "cost": stock.cost_per_unit * product_sale.quantity_sold,
+                    "profit": (product_sale.price_per_unit - stock.cost_per_unit)
+                    * product_sale.quantity_sold,
+                }
+
+                total_tax += product_sale.tax_amount
+                total_sales += product_sale.price
+                total_profit += product_info["profit"]
+
+                summary["products"].append(product_info)
+
+            report["total_sales"] += total_sales
+            report["tax_amount"] += total_tax
+            report["profit"] += total_profit
+
+            report["sales_report"].append(summary)
+
+        return Response(
+            {"sales_report": report},
+            status=200,
+        )
 
 
 class ProductSalesViewset(ViewSet):
@@ -257,26 +353,6 @@ class ProductSalesViewset(ViewSet):
         stock.save()
         product_sale.delete()
         return Response(status=204)
-
-    # @action(detail=False, methods=["GET"])
-    # def list_all_sale_products(self, request, pk=None):
-    #     """
-    #     List all ProductSales for a Sale
-    #     """
-    #     sale = get_object_or_404(self.sales_queryset, uuid=pk)
-    #     product_sales = get_list_or_404(self.product_sales_queryset, sales=sale.id)
-    #     serializer = ProductSalesSerializer(product_sales, many=True)
-    #     return Response(serializer.data)
-
-    # @action(detail=False, methods=["GET"])
-    # def list_all_product_sales(self, request, pk=None):
-    #     """
-    #     List all sales associated with a Product
-    #     """
-    #     product = get_object_or_404(self.product_queryset, uuid=pk)
-    #     product_sales = get_list_or_404(self.product_sales_queryset, product=product.id)
-    #     serializer = ProductSalesSerializer(product_sales, many=True)
-    #     return Response(serializer.data)
 
 
 class CustomerViewset(ViewSet):
