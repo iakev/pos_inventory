@@ -38,5 +38,14 @@
   "scripts": {
     "dev": "webpack serve --config webpack/dev.config.js",
     "build": "webpack --config webpack/prod.config.js"
-  }
+  },
+  "description": "Online POS, Cash Register and Inventory Management System",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
