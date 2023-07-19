@@ -118,10 +118,19 @@ class SalesViewSet(ViewSet):
         Complete a Sale by adding the requisite data and creating the related
         product sale object
         """
+        payment_mode_mapping = {
+            "CASH": "01",
+            "CREDIT": "02",
+            "CASH/CREDIT": "03",
+            "BANK CHECK": "04",
+            "DEBIT AND CREDIT CARD": "05",
+            "MOBILE MONEY": "06",
+            "OTHER": "07",
+        }
         payment_mode = request.data.get("payment_mode")
         amount_paid = request.data.get("amount_paid")
         sale = get_object_or_404(self.sales_queryset, uuid=pk)
-        business = get_object_or_404(Business, id=sale.business)
+        business = get_object_or_404(Business, id=sale.business_id.id)
         product_sales = sale.product_sales.all()
         receipt_data = {}
         receipt_data["business_name"] = business.name
@@ -130,33 +139,72 @@ class SalesViewSet(ViewSet):
         receipt_data["business_phone"] = business.phone_number
         receipt_data["business_email"] = business.email_address
         receipt_data["label"] = sale.receipt_label
-        receipt_data["product_info"] = {}
-        for product_sale in product_sales:
-            receipt_data["product_info"]["name"] = product_sale.product.name
-            receipt_data["product_info"][
-                "description"
-            ] = product_sale.product.description
-            receipt_data["product_info"]["unit_price"] = product_sale.price_per_unit
-            receipt_data["product_info"]["quantity"] = product_sale.quantity_sold
-            receipt_data["product_info"][
-                "total_amount_without_tax"
-            ] = product_sale.price
-            receipt_data["product_info"][
-                "tax-designation"
-            ] = product_sale.product.tax_type
-            receipt_data["product_info"]["Total Tax"] = product_sale.sale.tax_amount
-            receipt_data["product_info"][
-                "Sale Amount with Tax"
-            ] = product_sale.sale.sale_amount_with_tax
-            receipt_data["Total amount paid"] = amount_paid
+        receipt_data["product_info"] = []
+        total_amount = 0
+        total_tax = 0
 
-        if (
-            payment_mode == PaymentMode.PaymentMethod.CASH
-            or payment_mode == PaymentMode.PaymentMethod.CASH_CREDIT
-        ):
-            receipt_data["change"] = sale.generate_change(
-                receipt_data["Sale Amount with tax"], amount_paid
+        for product_sale in product_sales:
+            product_info = {
+                "name": product_sale.product.name,
+                "description": product_sale.product.description,
+                "unit_price": product_sale.price_per_unit,
+                "quantity": product_sale.quantity_sold,
+                "total_amount_without_tax": product_sale.price,
+                "tax_designation": product_sale.product.tax_type,
+                "tax": product_sale.tax_amount,
+            }
+            receipt_data["product_info"].append(product_info)
+
+            # Add the sale_amount_with_tax to the total_amount
+            total_amount = product_sale.sale.sale_amount_with_tax
+            total_tax += product_sale.sale.tax_amount
+
+        receipt_data["total_amount_without_tax"] = (
+            sale.sale_amount_with_tax - sale.tax_amount
+        )
+        receipt_data["total_tax"] = total_tax
+        receipt_data["total_amount"] = Decimal(total_amount)
+        receipt_data["payment_mode"] = payment_mode
+        receipt_data["total_amount_paid"] = Decimal(amount_paid)
+        receipt_data["sale_status"] = Sales.TransactionProgress.Approved
+
+        if payment_mode in payment_mode_mapping:
+            mapped_payment_mode = payment_mode_mapping[payment_mode]
+            payment_mode_obj, _ = PaymentMode.objects.get_or_create(
+                payment_method=mapped_payment_mode
             )
+
+            # Check if properties is None before creating the till dictionary
+            if not payment_mode_obj.properties:
+                reset_dict = {
+                    1: 0,
+                    5: 0,
+                    10: 0,
+                    20: 0,
+                    50: 0,
+                    100: 0,
+                    200: 0,
+                    500: 0,
+                    1000: 0,
+                }
+                payment_mode_obj.properties = reset_dict
+                payment_mode_obj.save()
+
+            sale.payment_id = payment_mode_obj
+            sale.save()
+
+            if (
+                mapped_payment_mode == PaymentMode.PaymentMethod.CASH
+                or mapped_payment_mode == PaymentMode.PaymentMethod.CASH_CREDIT
+            ):
+                receipt_data["change"] = sale.generate_change(
+                    receipt_data["total_amount"], Decimal(amount_paid)
+                )
+
+            # Save the payment mode for the sale
+            sale.sale_status = Sales.TransactionProgress.Approved
+            sale.save()
+
         return Response(receipt_data)
 
     @action(detail=True, methods=["POST"])
@@ -196,7 +244,7 @@ class SalesViewSet(ViewSet):
             "total_sales": 0,
             "tax_amount": 0,
             "profit": 0,
-            "sales_report": [],
+            "sales": [],
         }
         for sale in sales_summary:
             summary = {
@@ -228,16 +276,17 @@ class SalesViewSet(ViewSet):
                 }
 
                 total_tax += product_sale.tax_amount
-                total_sales += product_sale.price
+
                 total_profit += product_info["profit"]
 
                 summary["products"].append(product_info)
-
+            total_sales += sale.sale_amount_with_tax
+            total_tax = sale.tax_amount
             report["total_sales"] += total_sales
             report["tax_amount"] += total_tax
             report["profit"] += total_profit
 
-            report["sales_report"].append(summary)
+            report["sales"].append(summary)
 
         return Response(
             {"sales_report": report},
