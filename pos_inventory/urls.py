@@ -3,6 +3,7 @@ from sales.api.v1.viewsets import (
     ProductSalesViewset,
     CustomerViewset,
     PaymentModeViewSet,
+    PurchaseViewset
 )
 from products.api.v1.viewsets import ProductViewSet, CategoryViewSet, StockViewSet
 from products.api.v1.viewsets import (
@@ -29,5 +30,6 @@ router.register(
     r"supplierproducts", SupplierProductViewSet, basename="supplierproducts"
 )
 router.register(r"paymentmodes", PaymentModeViewSet, basename="paymentmodes")
+router.register(r"purchases", PurchaseViewset, basename="purchases")
 
 urlpatterns = router.urls

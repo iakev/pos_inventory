@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 from administration.models import Business, Employee
 from administration.api.v1.serializers import BusinessSerializer, EmployeeSerializer
-from sales.models import PaymentMode, ProductSales, Sales, Customer
+from sales.models import PaymentMode, ProductSales, Sales, Customer, Purchase
 from products.models import Product
 from products.api.v1.serializers import ProductSerializer
 
@@ -112,4 +112,21 @@ class CustomerSerializer(serializers.ModelSerializer):
             "address",
             "tax_pin",
             "email_address",
+        ]
+
+class PurchaseSerializer(serializers.ModelSerializer):
+    """Serializer for Purchase model"""
+
+    class Meta:
+        model = Purchase
+        fields = [
+            "uuid",
+            "user_id",
+            "supplier_id",
+            "product_id",
+            "created_at",
+            "updated_at",
+            "product_quantity",
+            "purchase_amount",
+            "description",
         ]

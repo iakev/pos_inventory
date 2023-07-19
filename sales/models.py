@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
 from administration.models import Business, Employee
-from products.models import Product
+from products.models import Product, Supplier, Stock
 
 # Create your models here.
 
@@ -168,3 +168,19 @@ class ProductSales(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # logic for populating price_per_unit according to is_wholesale
+
+class Purchase(models.Model):
+    """Model with purchase information"""
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    user_id = models.ForeignKey(Employee, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
+    supplier_id = models.OneToOneField(Supplier, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
+    product_id = models.ForeignKey(Stock, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    product_quantity = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    purchase_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    description = models.TextField(blank=True, null=True)

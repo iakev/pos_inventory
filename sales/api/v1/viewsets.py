@@ -8,13 +8,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from products.models import Product, Stock
-from sales.models import PaymentMode, ProductSales, Sales, Customer
+from sales.models import (PaymentMode, ProductSales, Sales, Customer, Supplier, Purchase)
 from administration.models import Employee, Business
 from .serializers import (
     PaymentModeSerializer,
     ProductSalesSerializer,
     SalesSerializer,
     CustomerSerializer,
+    PurchaseSerializer
 )
 
 
@@ -365,4 +366,85 @@ class PaymentModeViewSet(ViewSet):
         """deletes an existing Customer"""
         payment = get_object_or_404(self.queryset, uuid=pk)
         payment.delete()
+        return Response(status=204)
+
+class PurchaseViewset(ViewSet):
+    """"API endpoint that allows purchases to viewed and edited"""
+
+    @property
+    def stock_queryset(self):
+        return Stock.objects.all()
+    
+    @property
+    def supplier_queryset(self):
+        return Supplier.objects.all()
+    
+    @property
+    def employee_queryset(self):
+        return Employee.objects.all()
+    
+    @property
+    def purchase_queryset(self):
+        return Purchase.objects.all()
+    
+    def list(self, request, *args, **kwargs):
+        """list all purchases """
+        serializer = PurchaseSerializer(self.purchase_queryset, many=True)
+        return Response(serializer.data)
+    
+    def retrieve(self, request, pk=None):
+        """Return a single purchase"""
+        purchase= get_object_or_404(self.purchase_queryset, uuid=pk)
+        serializer = PurchaseSerializer(purchase)
+        return Response(serializer.data)
+    
+    def create(self, request, *args, **kwargs):
+        """create a new purchase"""
+        data = request.data
+        product_uuid = data.pop("product_id")
+        supplier_uuid = data.pop("supplier_id")
+        employee_uuid = data.pop("user_id")
+        product_quantity = data.pop("product_quantity")
+        if product_uuid and supplier_uuid and employee_uuid:
+            stock = get_object_or_404(self.stock_queryset, uuid=product_uuid)
+            supplier = get_object_or_404(self.supplier_queryset, uuid=supplier_uuid)
+            employee = get_object_or_404(self.employee_queryset, uuid=employee_uuid)
+            data["product_id"] = stock.id
+            data["supplier_id"] = supplier.id
+            data["user_id"] = employee.id
+        serializer = PurchaseSerializer(data=data)
+        if serializer.is_valid():
+            stock.update_stock_quantity(Stock.StockInOutType.Purchase, product_quantity, "Purchase Made")
+            stock.save()
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.data, status=400)
+    
+    def update(self, request, pk=None):
+        """Update a ProductSale"""
+        purchase = get_object_or_404(self.purchase_queryset, uuid=pk)
+        serializer = PurchaseSerializer(purchase, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    def partial_update(self, request, pk=None):
+        """Update a ProductSale"""
+        purchase = get_object_or_404(self.purchase_queryset, uuid=pk)
+        serializer = PurchaseSerializer(purchase, data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    def destroy(self, request, pk=None):
+        """Delete a ProductSale"""
+        purchase = get_object_or_404(self.purchase_queryset, uuid=pk)
+        product = purchase.product_id
+        stock = get_object_or_404(self.stock_queryset, product_id=product)
+        stock.update_stock_quantity(
+            Stock.StockInOutType.Discarding,  purchase.product_quantity, "Purchase undone"
+        )
+        stock.save()
         return Response(status=204)
