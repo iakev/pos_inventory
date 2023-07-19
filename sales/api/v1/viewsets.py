@@ -12,6 +12,8 @@ from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from products.models import Product, Stock
 from sales.models import PaymentMode, ProductSales, Sales, Customer
