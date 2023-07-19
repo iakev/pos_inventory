@@ -1,8 +1,10 @@
 """
 Module illustrating the viewsets for product API's
 """
+from datetime import datetime
 from administration.models import Supplier
 from django.shortcuts import get_object_or_404, get_list_or_404
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
@@ -68,6 +70,25 @@ class CategoryViewSet(ViewSet):
         category.delete()
         return Response(status=204)
 
+    @action(detail=False, methods=["POST"])
+    def search(self, request, *args, **kwargs):
+        query = request.data.get("query", "")
+        if query:
+            categories = Category.objects.filter(
+                Q(name__icontains=query) | Q(uuid__icontains=query)
+            )
+            serializer = CategorySerializer(categories, many=True)
+            return Response(serializer.data)
+        return Response({"categories": []})
+
+    @action(detail=True, methods=["GET"])
+    def list_all_products(self, request, pk=None):
+        """List all products in a category"""
+        category = get_object_or_404(self.queryset, uuid=pk)
+        products = category.products.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
 
 class ProductViewSet(ViewSet):
     """Basic viewset for Product Related Items"""
@@ -127,6 +148,19 @@ class ProductViewSet(ViewSet):
         product = get_object_or_404(self.product_queryset, uuid=pk)
         product.delete()
         return Response(status=204)
+
+    @action(detail=False, methods=["POST"])
+    def search(self, request, *args, **kwargs):
+        query = request.data.get("query", "")
+        if query:
+            products = Product.objects.filter(
+                Q(name__icontains=query)
+                | Q(description__icontains=query)
+                | Q(code__icontains=query)
+            )
+            serializer = ProductSerializer(products, many=True)
+            return Response(serializer.data)
+        return Response({"products": []})
 
 
 class StockViewSet(ViewSet):
@@ -211,6 +245,74 @@ class StockViewSet(ViewSet):
                 serializer.save()
             return Response(serializer.data)
         return Response({"error": "No stock movement type given"}, status=400)
+
+    @action(detail=False, methods=["POST"])
+    def generate_stock_movement_report(self, request, pk=None):
+        """
+        Generate stock movement report for a given date range
+        """
+        data = request.data
+        start_date = data.get("start_date", None)
+        end_date = data.get("end_date", None)
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        else:
+            return Response(
+                {"message": "Please provide a start date and end date"},
+                status=400,
+            )
+
+        # Filter stock items based on the date range
+        stocks = Stock.objects.filter(updated_at__date__range=[start_date, end_date])
+
+        if not stocks:
+            return Response(
+                {"message": "No stock movement found for the given date range"},
+                status=400,
+            )
+
+        report = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "stock_movement": [],
+        }
+
+        for stock in stocks:
+            stock_movement = {
+                "stock_id": stock.uuid,
+                "product_name": stock.product_id.name,
+                "stock_quantity": stock.stock_quantity,
+                "stock_updated_at": stock.updated_at,
+                "cost_per_unit": stock.cost_per_unit,
+                "price_per_unit_retail": stock.price_per_unit_retail,
+                "price_per_unit_wholesale": stock.price_per_unit_wholesale,
+                "reorder_level": stock.reorder_level,
+                "reorder_quantity": stock.reorder_quantity,
+                "stock_movement_type": stock.stock_movement_type,
+                "stock_movement_quantity": stock.stock_movement_quantity,
+                "stock_movement_remarks": stock.stock_movement_remarks,
+            }
+            report["stock_movement"].append(stock_movement)
+
+        return Response(
+            {"stock_movement_report": report},
+            status=200,
+        )
+
+    @action(detail=False, methods=["POST"])
+    def search(self, request, *args, **kwargs):
+        query = request.data.get("query", "")
+        product = Product.objects.filter(
+            Q(name__icontains=query)
+            | Q(description__icontains=query)
+            | Q(code__icontains=query)
+        ).first()
+        if query:
+            stock = Stock.objects.get(pk=product.id)
+            serializer = StockSerializer(stock)
+            return Response(serializer.data)
+        return Response({"stocks": []})
 
 
 class SupplierProductViewSet(ViewSet):
