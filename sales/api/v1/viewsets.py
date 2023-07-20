@@ -526,6 +526,10 @@ class PurchaseViewset(ViewSet):
     def purchase_queryset(self):
         return Purchase.objects.all()
     
+    @property
+    def product_queryset(self):
+        return Product.objects.all()
+    
     def list(self, request, *args, **kwargs):
         """list all purchases """
         serializer = PurchaseSerializer(self.purchase_queryset, many=True)
@@ -539,18 +543,22 @@ class PurchaseViewset(ViewSet):
     
     def create(self, request, *args, **kwargs):
         """create a new purchase"""
+        print(request.data)
         data = request.data
         product_uuid = data.pop("product_id")
         supplier_uuid = data.pop("supplier_id")
         employee_uuid = data.pop("user_id")
-        product_quantity = data.pop("product_quantity")
+        product_quantity = data.get("product_quantity")
+        print(supplier_uuid, employee_uuid, product_quantity)
         if product_uuid and supplier_uuid and employee_uuid:
-            stock = get_object_or_404(self.stock_queryset, uuid=product_uuid)
+            product = get_object_or_404(self.product_queryset, uuid=product_uuid)
+            stock = get_object_or_404(self.stock_queryset, pk=product.id)
             supplier = get_object_or_404(self.supplier_queryset, uuid=supplier_uuid)
             employee = get_object_or_404(self.employee_queryset, uuid=employee_uuid)
-            data["product_id"] = stock.id
+            data["product_id"] = product.id
             data["supplier_id"] = supplier.id
             data["user_id"] = employee.id
+        print(data)
         serializer = PurchaseSerializer(data=data)
         if serializer.is_valid():
             stock.update_stock_quantity(Stock.StockInOutType.Purchase, product_quantity, "Purchase Made")
@@ -586,4 +594,5 @@ class PurchaseViewset(ViewSet):
             Stock.StockInOutType.Discarding,  purchase.product_quantity, "Purchase undone"
         )
         stock.save()
+        purchase.delete()
         return Response(status=204)

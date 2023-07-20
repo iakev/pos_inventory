@@ -72,7 +72,7 @@ class PaymentModeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PaymentMode
-        fields = ["uuid", "mode", "properties"]
+        fields = ["uuid", "payment_method", "properties"]
 
     def create(self, validated_data):
         """Create a new payment mode"""
@@ -110,6 +110,7 @@ class CustomerSerializer(serializers.ModelSerializer):
             "tax_pin",
             "email_address",
         ]
+
 
 class PurchaseSerializer(serializers.ModelSerializer):
     """Serializer for Purchase model"""
