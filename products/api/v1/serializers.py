@@ -141,33 +141,27 @@ class SupplierSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    def create(self, validated_data):
-        """create and validate a supplier instance"""
-        print("validate data", validated_data)
-        product_data = self.initial_data.get("products")
-        supplier = Supplier.objects.create(**validated_data)
-        if product_data:
-            for product in product_data:
-                supplier.products.add(product)
-        return supplier
+    # def create(self, validated_data):
+    #     """create and validate a supplier instance"""
+    #     supplier = Supplier.objects.create(**validated_data)
+    #     return supplier
 
-    def update(self, supplier, validated_data):
-        """updates a supplier"""
-        product_data = validated_data.pop("products")
-        if product_data:
-            supplier.products.clear()
-            for product in product_data:
-                supplier.products.add(product)
-        supplier.name = validated_data.get("name", supplier.name)
-        supplier.address = validated_data.get("address", supplier.address)
-        supplier.email_address = validated_data.get(
-            "email_address", supplier.email_address
-        )
-        supplier.phone_number = validated_data.get(
-            "phone_number", supplier.phone_number
-        )
-        supplier.save()
-        return supplier
+    # def update(self, supplier, validated_data):
+    #     """updates a supplier"""
+    #     print(self.initial_data, "at update in seliaze")
+    #     product_data = self.initial_data.pop("products")
+    #     print("we got product data:", product_data)
+    #     if product_data:
+    #         #supplier.products.clear()
+    #         for product in product_data:
+    #             supplier.products.add(product)
+    #     supplier.name = validated_data.get("name", supplier.name)
+    #     supplier.address = validated_data.get("address", supplier.address)
+    #     supplier.email_address = validated_data.get("email_address", supplier.email_address)
+    #     supplier.phone_number = validated_data.get("phone_number", supplier.phone_number)
+    #     print("supplier saved")
+    #     supplier.save()
+    #     return supplier
 
 
 class SupplierProductSerializer(serializers.ModelSerializer):

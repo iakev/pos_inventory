@@ -327,6 +327,7 @@ class Stock(models.Model):
             self.StockInOutType.Adjustment_in,
         ]:
             stock_movement_quantity = Decimal(stock_movement_quantity)
+            self.stock_movement_quantity = stock_movement_quantity
             self.stock_quantity += stock_movement_quantity
             self.stock_movement_remarks = stock_movement_remarks
         elif stock_movement_type in [
@@ -338,6 +339,7 @@ class Stock(models.Model):
             self.StockInOutType.Adjustment_out,
         ]:
             stock_movement_quantity = Decimal(stock_movement_quantity)
+            self.stock_movement_quantity = stock_movement_quantity
             self.stock_quantity -= stock_movement_quantity
             self.stock_movement_remarks = stock_movement_remarks
 

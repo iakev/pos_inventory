@@ -107,14 +107,11 @@ class EmployeeViewset(ViewSet):
 
     def partial_update(self, request, pk=None):
         """updates a employee partially given it's identifier"""
-        print("partial employee update")
         employee = get_object_or_404(self.queryset, uuid=pk)
         serializer = EmployeeSerializer(employee, data=request.data, partial=True)
         if serializer.is_valid():
-            print("employee serializer valid")
             employee = serializer.update(employee, serializer.validated_data)
             return Response(serializer.data)
-        print("employee invalid")
         return Response(serializer.errors, status=400)
 
     def destroy(self, request, pk=None):
