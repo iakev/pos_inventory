@@ -105,7 +105,7 @@ class Sales(models.Model):
     customer_id = models.ForeignKey(
         Customer, related_name="sales", on_delete=models.CASCADE, null=True, blank=True
     )
-    business_id = models.OneToOneField(
+    business_id = models.ForeignKey(
         Business, related_name="sale", on_delete=models.CASCADE, null=True, blank=True
     )
     payment_id = models.ForeignKey(
