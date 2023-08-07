@@ -343,6 +343,9 @@ class ProductSalesViewset(ViewSet):
         data["product"] = product.id
         data["sale"] = sale.id
         stock = get_object_or_404(self.stock_queryset, product_id=product.id)
+        if quantity_sold > stock.stock_quantity:
+            quantity_sold = stock.stock_quantity
+            data["quantity_sold"] = quantity_sold
         if data["is_wholesale"]:
             data["price_per_unit"] = stock.price_per_unit_wholesale
         else:
