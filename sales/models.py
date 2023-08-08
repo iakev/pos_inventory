@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
 from administration.models import Business, Employee
-from products.models import Product
+from products.models import Product, Supplier, Stock
 
 # Create your models here.
 
@@ -146,6 +146,76 @@ class Sales(models.Model):
     def __str__(self):
         return f"{self.uuid}"
 
+    def reset_till(self):
+        """
+        Reset the cash register
+        """
+        reset_dict = {1: 0, 5: 0, 10: 0, 20: 0, 50: 0, 100: 0, 200: 0, 500: 0, 1000: 0}
+
+        # Copy reset_dict values to properties field
+        if self.payment_id:
+            self.payment_id.properties.update(reset_dict)
+            self.payment_id.save()
+
+    def generate_change(self, sale_amount, amount_paid):
+        """
+        Generate the change to be given
+        """
+        properties = self.payment_id.properties
+
+        # Calculate the total cash in the till
+        total_cash = sum(
+            int(denomination) * quantity
+            for denomination, quantity in properties.items()
+        )
+
+        change = amount_paid - sale_amount
+        if total_cash == 0:
+            return change
+        if change >= 0:
+            # Update the denominations in the till
+            denominations = sorted(properties.keys(), reverse=True)
+            remaining_change = change
+
+            for denomination in denominations:
+                quantity = properties[denomination]
+                num_denominations = remaining_change // denomination
+
+                if num_denominations <= quantity:
+                    properties[denomination] -= num_denominations
+                    remaining_change -= num_denominations * denomination
+                else:
+                    properties[denomination] = 0
+                    remaining_change -= quantity * denomination
+
+                if remaining_change == 0:
+                    break
+
+            # Save the updated properties
+            self.properties = properties
+            self.save()
+
+            return change
+        else:
+            return 0
+
+    def break_down_denominiations(self, denominations):
+        """
+        Breakdown demoniations when given as a list of tuples
+        containing the denominiation and the wanted denominations respectively
+        """
+        properties = self.payment_id.properties
+        till = properties
+        for denom, wanted_denoms in denominations:
+            if denom in till.keys():
+                till[denom] -= 1
+                amount_to_break += denom * 1
+            for denoms, quantity in wanted_denoms.items():
+                till[denoms] += quantity
+                change_so_far += denoms * quantity
+        self.properties = till
+        self.save()
+
 
 class ProductSales(models.Model):
     """
@@ -168,3 +238,19 @@ class ProductSales(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # logic for populating price_per_unit according to is_wholesale
+
+class Purchase(models.Model):
+    """Model with purchase information"""
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    user_id = models.ForeignKey(Employee, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
+    supplier_id = models.OneToOneField(Supplier, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
+    product_id = models.ForeignKey(Stock, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    product_quantity = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    purchase_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00
+    )
+    description = models.TextField(blank=True, null=True)

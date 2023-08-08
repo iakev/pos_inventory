@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 from administration.models import Business, Employee
 from administration.api.v1.serializers import BusinessSerializer, EmployeeSerializer
-from sales.models import PaymentMode, ProductSales, Sales, Customer
+from sales.models import PaymentMode, ProductSales, Sales, Customer, Purchase
 from products.models import Product
 from products.api.v1.serializers import ProductSerializer
 
@@ -72,17 +72,14 @@ class PaymentModeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PaymentMode
-        fields = ["uuid", "mode", "properties"]
+        fields = ["uuid", "payment_method", "properties"]
 
     def create(self, validated_data):
         """Create a new payment mode"""
-        print(f"calling PaymentSerializer create method with {validated_data}")
         properties = validated_data.pop(
             "properties", {}
         )  # Get the properties data or an empty dictionary if not provided
-        print(f"we have properties as {properties}")
         payment_mode = PaymentMode(**validated_data)
-        print(f"we have payment_mode as {payment_mode}")
         payment_mode.properties = properties
         payment_mode.save()
         return payment_mode
@@ -112,4 +109,22 @@ class CustomerSerializer(serializers.ModelSerializer):
             "address",
             "tax_pin",
             "email_address",
+        ]
+
+
+class PurchaseSerializer(serializers.ModelSerializer):
+    """Serializer for Purchase model"""
+
+    class Meta:
+        model = Purchase
+        fields = [
+            "uuid",
+            "user_id",
+            "supplier_id",
+            "product_id",
+            "created_at",
+            "updated_at",
+            "product_quantity",
+            "purchase_amount",
+            "description",
         ]

@@ -1,8 +1,10 @@
 """
 Module illustrating the viewsets for product API's
 """
+from datetime import datetime
 from administration.models import Supplier
 from django.shortcuts import get_object_or_404, get_list_or_404
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
@@ -68,6 +70,25 @@ class CategoryViewSet(ViewSet):
         category.delete()
         return Response(status=204)
 
+    @action(detail=False, methods=["POST"])
+    def search(self, request, *args, **kwargs):
+        query = request.data.get("query", "")
+        if query:
+            categories = Category.objects.filter(
+                Q(name__icontains=query) | Q(uuid__icontains=query)
+            )
+            serializer = CategorySerializer(categories, many=True)
+            return Response(serializer.data)
+        return Response({"categories": []})
+
+    @action(detail=True, methods=["GET"])
+    def list_all_products(self, request, pk=None):
+        """List all products in a category"""
+        category = get_object_or_404(self.queryset, uuid=pk)
+        products = category.products.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
 
 class ProductViewSet(ViewSet):
     """Basic viewset for Product Related Items"""
@@ -127,6 +148,36 @@ class ProductViewSet(ViewSet):
         product = get_object_or_404(self.product_queryset, uuid=pk)
         product.delete()
         return Response(status=204)
+
+    @action(detail=True, methods=["get"])
+    def list_suppliers(self, request, pk=None):
+        """List all suppliers of a product"""
+        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product_suppliers = product.supplierproduct_set.all()
+        suppliers = []
+        for product_supplier in product_suppliers:
+            supplier = {
+                "uuid": product_supplier.supplier.uuid,
+                "name": product_supplier.supplier.name,
+                "address": product_supplier.supplier.address,
+                "email_address": product_supplier.supplier.email_address,
+                "phone_number": product_supplier.supplier.phone_number,
+            }
+            if supplier not in suppliers:
+                suppliers.append(supplier)
+        return Response(suppliers)
+    @action(detail=False, methods=["POST"])
+    def search(self, request, *args, **kwargs):
+        query = request.data.get("query", "")
+        if query:
+            products = Product.objects.filter(
+                Q(name__icontains=query)
+                | Q(description__icontains=query)
+                | Q(code__icontains=query)
+            )
+            serializer = ProductSerializer(products, many=True)
+            return Response(serializer.data)
+        return Response({"products": []})
 
 
 class StockViewSet(ViewSet):
@@ -203,14 +254,80 @@ class StockViewSet(ViewSet):
         stock_movement_remarks = request.data.get("stock_movement_remarks")
         print(request.data)
         if stock_movement_type:
-            stock.update_stock_quantity(
-                stock_movement_type, stock_movement_quantity, stock_movement_remarks
-            )
+            stock.update_stock_quantity(stock_movement_type, stock_movement_quantity, stock_movement_remarks)
             serializer = StockSerializer(stock, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
             return Response(serializer.data)
         return Response({"error": "No stock movement type given"}, status=400)
+
+    @action(detail=False, methods=["POST"])
+    def generate_stock_movement_report(self, request, pk=None):
+        """
+        Generate stock movement report for a given date range
+        """
+        data = request.data
+        start_date = data.get("start_date", None)
+        end_date = data.get("end_date", None)
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        else:
+            return Response(
+                {"message": "Please provide a start date and end date"},
+                status=400,
+            )
+
+        # Filter stock items based on the date range
+        stocks = Stock.objects.filter(updated_at__date__range=[start_date, end_date])
+
+        if not stocks:
+            return Response(
+                {"message": "No stock movement found for the given date range"},
+                status=400,
+            )
+
+        report = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "stock_movement": [],
+        }
+
+        for stock in stocks:
+            stock_movement = {
+                "stock_id": stock.uuid,
+                "product_name": stock.product_id.name,
+                "stock_quantity": stock.stock_quantity,
+                "stock_updated_at": stock.updated_at,
+                "cost_per_unit": stock.cost_per_unit,
+                "price_per_unit_retail": stock.price_per_unit_retail,
+                "price_per_unit_wholesale": stock.price_per_unit_wholesale,
+                "reorder_level": stock.reorder_level,
+                "reorder_quantity": stock.reorder_quantity,
+                "stock_movement_type": stock.stock_movement_type,
+                "stock_movement_quantity": stock.stock_movement_quantity,
+                "stock_movement_remarks": stock.stock_movement_remarks,
+            }
+            report["stock_movement"].append(stock_movement)
+
+        return Response(
+            {"stock_movement_report": report},
+            status=200,
+        )
+
+    @action(detail=False, methods=["POST"])
+    def search(self, request, *args, **kwargs):
+        query = request.data.get("query", "")
+        product = Product.objects.filter(
+            Q(name__icontains=query)
+            | Q(description__icontains=query)
+            | Q(code__icontains=query)
+        ).first()
+        if query:
+            stock = Stock.objects.get(pk=product.id)
+            serializer = StockSerializer(stock)
+            return Response(serializer.data)
+        return Response({"stocks": []})
 
 
 class SupplierProductViewSet(ViewSet):
@@ -234,9 +351,7 @@ class SupplierProductViewSet(ViewSet):
         """
         List all supplier products
         """
-        serializer = SupplierProductSerializer(
-            self.supplier_product_queryset, many=True
-        )
+        serializer = SupplierProductSerializer(self.supplier_product_queryset, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
@@ -249,11 +364,22 @@ class SupplierProductViewSet(ViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new ProductSale"""
-        serializer = SupplierProductSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=200)
-        return Response(serializer.errors, status=400)
+        # TODO: implement a check t remove duplicates
+        supplier_id = request.data.get('supplier')
+        product_id = request.data.get('product')
+        print(supplier_id, product_id)
+        supplier = Supplier.objects.get(uuid=supplier_id)
+        product = Product.objects.get(uuid=product_id)
+        print("suppler", supplier, "product", product)
+        if supplier and product:
+            suppplier_product = SupplierProduct.objects.filter(supplier=supplier.id, product=product.id).first()
+        if not suppplier_product:
+            serializer = SupplierProductSerializer(data={"supplier":supplier.id, "product":product.id})
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=200)
+            return Response(serializer.errors, status=400)
+        return Response({"error": "supplier already supplying the product"}, status=400)
 
     def update(self, request, pk=None):
         """Update a ProductSale"""
@@ -267,9 +393,7 @@ class SupplierProductViewSet(ViewSet):
     def partial_update(self, request, pk=None):
         """Update a ProductSale"""
         product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
-        serializer = SupplierProductSerializer(
-            product_sale, data=request.data, partial=True
-        )
+        serializer = SupplierProductSerializer(product_sale, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
@@ -287,9 +411,7 @@ class SupplierProductViewSet(ViewSet):
         List all ProductSales for a Sale
         """
         supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
-        supplier_products = get_list_or_404(
-            self.supplier_product_queryset, supplier=supplier.id
-        )
+        supplier_products = get_list_or_404(self.supplier_product_queryset, supplier=supplier.id)
         serializer = SupplierProductSerializer(supplier_products, many=True)
         return Response(serializer.data)
 
@@ -299,9 +421,7 @@ class SupplierProductViewSet(ViewSet):
         List all sales associated with a Product
         """
         product = get_object_or_404(self.product_queryset, uuid=pk)
-        product_supplier = get_list_or_404(
-            self.supplier_product_queryset, product=product.id
-        )
+        product_supplier = get_list_or_404(self.supplier_product_queryset, product=product.id)
         serializer = SupplierProductSerializer(product_supplier, many=True)
         return Response(serializer.data)
 
@@ -330,18 +450,7 @@ class SupplierViewSet(ViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new supplier"""
-        print(request.data)
-        data = request.data
-        product_uuids = data.pop("products")
-        print(product_uuids)
-        product_ids = []
-        for uuid in product_uuids:
-            product = get_object_or_404(self.product_queryset, uuid=uuid)
-            print(uuid, product)
-            product_ids.append(product.id)
-        print(product_ids)
-        data["products"] = product_ids
-        serializer = SupplierSerializer(data=data)
+        serializer = SupplierSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
