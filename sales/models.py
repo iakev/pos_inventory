@@ -105,7 +105,7 @@ class Sales(models.Model):
     customer_id = models.ForeignKey(
         Customer, related_name="sales", on_delete=models.CASCADE, null=True, blank=True
     )
-    business_id = models.OneToOneField(
+    business_id = models.ForeignKey(
         Business, related_name="sale", on_delete=models.CASCADE, null=True, blank=True
     )
     payment_id = models.ForeignKey(
@@ -237,7 +237,7 @@ class ProductSales(models.Model):
     tax_rate = models.CharField(max_length=5)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # logic for populating price_per_unit according to is_wholesale
+    
 
 class Purchase(models.Model):
     """Model with purchase information"""

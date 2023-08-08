@@ -8,10 +8,22 @@ from administration.models import Supplier
 from products.models import Category, Product, Stock, SupplierProduct
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for Category model
+    """
+
+    class Meta:
+        model = Category
+        fields = ["name", "uuid", "image", "thumbnail", "created_at", "updated_at"]
+
+
 class ProductSerializer(serializers.ModelSerializer):
     """
     Serializer for Product model
     """
+
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Product
@@ -31,42 +43,14 @@ class ProductSerializer(serializers.ModelSerializer):
             "packaging_unit",
         ]
 
-    # def create(self, validated_data):
-    #     """create a new product"""
-    #     product = Product(**validated_data)
-    #     product.save()
-    #     return product
-
-    # def update(self, product, validated_data):
-    #     """Update a product"""
-    #     product.category = validated_data.get("category", product.category)
-    #     product.name = validated_data.get("name", product.name)
-    #     product.description = validated_data.get("description", product.description)
-    #     product.product_type = validated_data.get("product_type", product.product_type)
-    #     product.code = validated_data.get("code", product.code)
-    #     product.tax_type = validated_data.get("tax_type", product.tax_type)
-    #     product.packaging_unit = validated_data.get("packaging_unit", product.packaging_unit)
-    #     product.unit = validated_data.get("unit", product.unit)
-    #     product.limited = validated_data.get("limited", product.limited)
-    #     product.active_for_sale = validated_data.get("active_for_sale", product.active_for_sale)
-    #     product.save()
-    #     return product
-
-
-class CategorySerializer(serializers.ModelSerializer):
-    """
-    Serializer for Category model
-    """
-
-    class Meta:
-        model = Category
-        fields = ["name", "uuid", "image", "thumbnail", "created_at", "updated_at"]
-
 
 class StockSerializer(serializers.ModelSerializer):
     """
     Serializer for Stock model
     """
+
+    # Use the ProductSerializer as a nested serializer for the product_id field
+    product_id = ProductSerializer(read_only=True)
 
     class Meta:
         model = Stock

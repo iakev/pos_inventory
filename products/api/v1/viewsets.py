@@ -166,6 +166,7 @@ class ProductViewSet(ViewSet):
             if supplier not in suppliers:
                 suppliers.append(supplier)
         return Response(suppliers)
+
     @action(detail=False, methods=["POST"])
     def search(self, request, *args, **kwargs):
         query = request.data.get("query", "")
