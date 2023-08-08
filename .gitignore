@@ -297,4 +297,3 @@ venv
 .git
 generate_doc.py
 openapi.json
-psql_backup/
