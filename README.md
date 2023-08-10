@@ -1,10 +1,79 @@
 # Pos Inventory
 
-Online POS, Cash Register and Inventory Management System
+The POS Inventory Management System is a user-friendly web application designed to streamline the management of inventory for Point of Sale (POS) businesses. This system allows businesses to efficiently track their products, update stock levels, manage suppliers, and generate reports to make informed decisions.
 
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
+## Features
+- **Product Management:** Add, edit, and delete products from the inventory. Each product includes details such as name, description, price, and quantity.
+
+- **Stock Updates:** Keep track of product stock levels in real-time. Receive alerts when products are running low to ensure you never run out of popular items.
+
+- **Supplier Information:** Maintain a list of suppliers with contact details. Link products to their respective suppliers for easy reordering.
+
+- **Sales Tracking:** Record sales transactions and automatically deduct sold quantities from the inventory. Monitor sales history for each product.
+
+- **User Authentication:** Secure user accounts with authentication to manage access control. Different user roles (admin, staff) have varying levels of system access.
+
+- **Reports Generation:** Generate comprehensive reports to gain insights into inventory levels, sales trends, and supplier performance. Export reports in various formats for further analysis.
+
+## Prerequisites
+
+Before you begin, ensure you have the following:
+
+- PostgreSQL: [Download PostgreSQL](https://www.postgresql.org/download/)
+
+## Installation Steps
+
+1. Install PostgreSQL:
+
+   Follow the installation instructions provided on the PostgreSQL download page based on your operating system.
+
+2. Create a Database:
+
+   Open a terminal or command prompt and log in to PostgreSQL:
+
+   ```bash
+      psql -U postgres
+   ```
+3. Create a new database for the POS
+
+    create a database 
+    ```bash
+       CREATE DATABASE pos_inventory_db;
+    ```
+    Exit the PostgreSQL console:
+    ```bash
+       \q
+    ```
+    Export your host, port, database name, database user and password
+## Installation
+1. Clone the repository:
+```bash
+   git clone https://github.com/iakev/pos_inventory.git
+```
+2. Navigate to the Requirements Directory, 
+```bash
+   cd pos_inventory/requirements
+```
+3. Create a Virtual Environment
+```bash
+    python -m venv venv
+```
+4. Activate the Virtual Environment:
+- On windows:
+```bash
+    venv\Scripts\activate
+```
+- On MacOs and Linux
+```bash
+   source venv/bin/activate
+```
+5. Install Requirements:
+```bash
+   pip install -r requirements/local.txt
+```
 License: MIT
 
 ## Settings
