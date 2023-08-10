@@ -5,6 +5,10 @@ from datetime import datetime
 from administration.models import Supplier
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models import Q
+
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
+
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
@@ -23,6 +27,9 @@ from .serializers import (
 class CategoryViewSet(ViewSet):
     """Basic viewset for Category Related Items"""
 
+    serializer_class = CategorySerializer
+    lookup_field = "uuid"
+
     @property
     def queryset(self):
         return Category.objects.all()
@@ -32,9 +39,20 @@ class CategoryViewSet(ViewSet):
         serializer = CategorySerializer(self.queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Category.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Return a single category"""
-        category = get_object_or_404(self.queryset, uuid=pk)
+        category = get_object_or_404(self.queryset, uuid=uuid)
         serializer = CategorySerializer(category)
         return Response(serializer.data)
 
@@ -46,27 +64,60 @@ class CategoryViewSet(ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Category.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Update an existing category"""
-        category = get_object_or_404(self.queryset, uuid=pk)
+        category = get_object_or_404(self.queryset, uuid=uuid)
         serializer = CategorySerializer(category, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Category.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """Update an existing category"""
-        category = get_object_or_404(self.queryset, uuid=pk)
+        category = get_object_or_404(self.queryset, uuid=uuid)
         serializer = CategorySerializer(category, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Category.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """Delete an existing category"""
-        category = get_object_or_404(self.queryset, uuid=pk)
+        category = get_object_or_404(self.queryset, uuid=uuid)
         category.delete()
         return Response(status=204)
 
@@ -81,10 +132,21 @@ class CategoryViewSet(ViewSet):
             return Response(serializer.data)
         return Response({"categories": []})
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Category.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
     @action(detail=True, methods=["GET"])
-    def list_all_products(self, request, pk=None):
+    def list_all_products(self, request, uuid=None):
         """List all products in a category"""
-        category = get_object_or_404(self.queryset, uuid=pk)
+        category = get_object_or_404(self.queryset, uuid=uuid)
         products = category.products.all()
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
@@ -92,6 +154,9 @@ class CategoryViewSet(ViewSet):
 
 class ProductViewSet(ViewSet):
     """Basic viewset for Product Related Items"""
+
+    serializer_class = ProductSerializer
+    lookup_field = "uuid"
 
     @property
     def product_queryset(self):
@@ -106,9 +171,20 @@ class ProductViewSet(ViewSet):
         serializer = ProductSerializer(self.product_queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Return a single product"""
-        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
         serializer = ProductSerializer(product)
         return Response(serializer.data)
 
@@ -125,32 +201,68 @@ class ProductViewSet(ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Update an existing product"""
-        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
         serializer = ProductSerializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """Update an existing product"""
-        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
         serializer = ProductSerializer(product, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """Delete an existing product"""
-        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
         product.delete()
         return Response(status=204)
 
     @action(detail=False, methods=["POST"])
     def search(self, request, *args, **kwargs):
+        """
+        Searches and enumerates possible products matching query
+        """
         query = request.data.get("query", "")
         if query:
             products = Product.objects.filter(
@@ -166,6 +278,9 @@ class ProductViewSet(ViewSet):
 class StockViewSet(ViewSet):
     """ViewSet for Stock  Items"""
 
+    serializer_class = StockSerializer
+    lookup_field = "uuid"
+
     @property
     def stock_queryset(self):
         return Stock.objects.all()
@@ -179,9 +294,20 @@ class StockViewSet(ViewSet):
         serializer = StockSerializer(self.stock_queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Stock item.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Return a single stock"""
-        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        stock = get_object_or_404(self.stock_queryset, uuid=uuid)
         serializer = StockSerializer(stock)
         return Response(serializer.data)
 
@@ -198,39 +324,78 @@ class StockViewSet(ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Stock item.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Update an existing stock"""
-        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        stock = get_object_or_404(self.stock_queryset, uuid=uuid)
         serializer = StockSerializer(stock, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Stock item.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """Update an existing stock"""
-        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        stock = get_object_or_404(self.stock_queryset, uuid=uuid)
         serializer = StockSerializer(stock, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Stock item.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """Delete an existing stock"""
-        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+        stock = get_object_or_404(self.stock_queryset, uuid=uuid)
         stock.delete()
         return Response(status=204)
 
-    def switch_case(case, product_id, data):
-        """
-        Updating stock quantity according to the stock_movement quantity
-        """
-        stock = get_object_or_404(Stock.objects.all(), product_id=product_id)
-
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Stock item.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
     @action(detail=True, methods=["POST"])
-    def stock_movement(self, request, pk=None):
-        stock = get_object_or_404(self.stock_queryset, uuid=pk)
+    def stock_movement(self, request, uuid=None):
+        """Method that updates stock according to the typr of movement"""
+        stock = get_object_or_404(self.stock_queryset, uuid=uuid)
 
         stock_movement_type = request.data.get("stock_movement_type")
         stock_movement_quantity = request.data.get("stock_movement_quantity")
@@ -302,6 +467,9 @@ class StockViewSet(ViewSet):
 
     @action(detail=False, methods=["POST"])
     def search(self, request, *args, **kwargs):
+        """
+        Returns stock information for product name, description or code  in query
+        """
         query = request.data.get("query", "")
         product = Product.objects.filter(
             Q(name__icontains=query)
@@ -319,6 +487,9 @@ class SupplierProductViewSet(ViewSet):
     """
     API endpoint that allows suppliers to be viewed or edited.
     """
+
+    serializer_class = SupplierProductSerializer
+    lookup_field = "uuid"
 
     @property
     def supplier_queryset(self):
@@ -341,34 +512,67 @@ class SupplierProductViewSet(ViewSet):
         )
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this SupplierProduct.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """
-        Retun a single ProductSale
+        Retun a single SupplierProduct
         """
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
         serializer = SupplierProductSerializer(product_sale)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        """Create a new ProductSale"""
+        """Create a new SupplierProduct"""
         serializer = SupplierProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
-        """Update a ProductSale"""
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this SupplierProduct.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
+        """Update a SupplierProduct"""
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
         serializer = SupplierProductSerializer(product_sale, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
-        """Update a ProductSale"""
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this SupplierProduct.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
+        """Update a SupplierProduct"""
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
         serializer = SupplierProductSerializer(
             product_sale, data=request.data, partial=True
         )
@@ -377,30 +581,63 @@ class SupplierProductViewSet(ViewSet):
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
-        """Delete a ProductSale"""
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=pk)
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this SupplierProduct.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
+        """Delete a SupplierProduct"""
+        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
         product_sale.delete()
         return Response(status=204)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Supplier.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
     @action(detail=False, methods=["GET"])
-    def list_all_supplier_products(self, request, pk=None):
+    def list_all_supplier_products(self, request, uuid=None):
         """
-        List all ProductSales for a Sale
+        List all SupplierProducts for a Supplier
         """
-        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
         supplier_products = get_list_or_404(
             self.supplier_product_queryset, supplier=supplier.id
         )
         serializer = SupplierProductSerializer(supplier_products, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
     @action(detail=False, methods=["GET"])
-    def list_all_product_supplier(self, request, pk=None):
+    def list_all_product_supplier(self, request, uuid=None):
         """
-        List all sales associated with a Product
+        List all Suppliers associated with a Product
         """
-        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
         product_supplier = get_list_or_404(
             self.supplier_product_queryset, product=product.id
         )
@@ -410,6 +647,9 @@ class SupplierProductViewSet(ViewSet):
 
 class SupplierViewSet(ViewSet):
     """API endpoit that allows Suppliers to be viewed and edited"""
+
+    serializer_class = SupplierSerializer
+    lookup_field = "uuid"
 
     @property
     def supplier_queryset(self):
@@ -424,9 +664,20 @@ class SupplierViewSet(ViewSet):
         serializer = SupplierSerializer(self.supplier_queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Supplier.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Return a single supplier"""
-        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
         serializer = SupplierSerializer(supplier)
         return Response(serializer.data)
 
@@ -449,26 +700,59 @@ class SupplierViewSet(ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Supplier.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Update an existing supplier"""
-        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
         serializer = SupplierSerializer(supplier, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Supplier.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """Update an existing supplier partially"""
-        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
         serializer = SupplierSerializer(supplier, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Supplier.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """Delete an existing supplier"""
-        supplier = get_object_or_404(self.supplier_queryset, uuid=pk)
+        supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
         supplier.delete()
         return Response(status=204)
