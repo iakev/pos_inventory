@@ -258,6 +258,24 @@ class ProductViewSet(ViewSet):
         product.delete()
         return Response(status=204)
 
+    @action(detail=True, methods=["get"])
+    def list_suppliers(self, request, pk=None):
+        """List all suppliers of a product"""
+        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product_suppliers = product.supplierproduct_set.all()
+        suppliers = []
+        for product_supplier in product_suppliers:
+            supplier = {
+                "uuid": product_supplier.supplier.uuid,
+                "name": product_supplier.supplier.name,
+                "address": product_supplier.supplier.address,
+                "email_address": product_supplier.supplier.email_address,
+                "phone_number": product_supplier.supplier.phone_number,
+            }
+            if supplier not in suppliers:
+                suppliers.append(supplier)
+        return Response(suppliers)
+
     @action(detail=False, methods=["POST"])
     def search(self, request, *args, **kwargs):
         """
@@ -683,18 +701,7 @@ class SupplierViewSet(ViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new supplier"""
-        print(request.data)
-        data = request.data
-        product_uuids = data.pop("products")
-        print(product_uuids)
-        product_ids = []
-        for uuid in product_uuids:
-            product = get_object_or_404(self.product_queryset, uuid=uuid)
-            print(uuid, product)
-            product_ids.append(product.id)
-        print(product_ids)
-        data["products"] = product_ids
-        serializer = SupplierSerializer(data=data)
+        serializer = SupplierSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
