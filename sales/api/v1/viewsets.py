@@ -32,6 +32,9 @@ class SalesViewSet(ViewSet):
     API endpoint that allows Sales to be viewed or edited.
     """
 
+    serializer_class = SalesSerializer
+    lookup_field = "uuid"
+
     @property
     def sales_queryset(self):
         return Sales.objects.all()
@@ -63,9 +66,20 @@ class SalesViewSet(ViewSet):
         serializer = SalesSerializer(self.sales_queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Retrieve a Sale indentified by uuid"""
-        sale = get_object_or_404(self.sales_queryset, uuid=pk)
+        sale = get_object_or_404(self.sales_queryset, uuid=uuid)
         serializer = SalesSerializer(sale)
         return Response(serializer.data)
 
@@ -91,32 +105,76 @@ class SalesViewSet(ViewSet):
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Update a Sale"""
-        sale = get_object_or_404(self.sales_queryset, uuid=pk)
+        sale = get_object_or_404(self.sales_queryset, uuid=uuid)
         serializer = SalesSerializer(sale, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """Update a Sale"""
-        sale = get_object_or_404(self.sales_queryset, uuid=pk)
+        sale = get_object_or_404(self.sales_queryset, uuid=uuid)
         serializer = SalesSerializer(sale, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """Delete a Sale"""
-        sale = get_object_or_404(self.sales_queryset, uuid=pk)
+        sale = get_object_or_404(self.sales_queryset, uuid=uuid)
         sale.delete()
         return Response(status=204)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
     @action(detail=True, methods=["post"])
-    def generate_receipt(self, request, pk=None):
+    def generate_receipt(self, request, uuid=None):
         """
         Complete a Sale by adding the requisite data and creating the related
         product sale object
@@ -132,7 +190,7 @@ class SalesViewSet(ViewSet):
         }
         payment_mode = request.data.get("payment_mode")
         amount_paid = request.data.get("amount_paid")
-        sale = get_object_or_404(self.sales_queryset, uuid=pk)
+        sale = get_object_or_404(self.sales_queryset, uuid=uuid)
         business = get_object_or_404(Business, id=sale.business_id.id)
         product_sales = sale.product_sales.all()
         receipt_data = {}
@@ -210,12 +268,23 @@ class SalesViewSet(ViewSet):
 
         return Response(receipt_data)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
     @action(detail=True, methods=["POST"])
-    def break_down_denomination(self, request, pk=None):
+    def break_down_denomination(self, request, uuid=None):
         """
         Breakdown denomination when there is no change available
         """
-        sale = get_object_or_404(self.sales_queryset, uuid=pk)
+        sale = get_object_or_404(self.sales_queryset, uuid=uuid)
         denominations = request.denominations
         sale.break_down_denominiations(denominations)
 
@@ -302,6 +371,9 @@ class ProductSalesViewset(ViewSet):
     API endpoint that allows Product to be viewed or edited.
     """
 
+    serializer_class = ProductSalesSerializer
+    lookup_field = "uuid"
+
     @property
     def product_sales_queryset(self):
         return ProductSales.objects.all()
@@ -325,11 +397,22 @@ class ProductSalesViewset(ViewSet):
         serializer = ProductSalesSerializer(self.product_sales_queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """
         Retun a single ProductSale
         """
-        product_sale = get_object_or_404(self.product_sales_queryset, uuid=pk)
+        product_sale = get_object_or_404(self.product_sales_queryset, uuid=uuid)
         serializer = ProductSalesSerializer(product_sale)
         return Response(serializer.data)
 
@@ -372,18 +455,40 @@ class ProductSalesViewset(ViewSet):
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this product_sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Update a ProductSale"""
-        product_sale = get_object_or_404(self.product_sales_queryset, uuid=pk)
+        product_sale = get_object_or_404(self.product_sales_queryset, uuid=uuid)
         serializer = ProductSalesSerializer(product_sale, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this product_sale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """Update a ProductSale"""
-        product_sale = get_object_or_404(self.product_sales_queryset, uuid=pk)
+        product_sale = get_object_or_404(self.product_sales_queryset, uuid=uuid)
         serializer = ProductSalesSerializer(
             product_sale, data=request.data, partial=True
         )
@@ -392,9 +497,20 @@ class ProductSalesViewset(ViewSet):
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this ProductSale.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """Delete a ProductSale"""
-        product_sale = get_object_or_404(self.product_sales_queryset, uuid=pk)
+        product_sale = get_object_or_404(self.product_sales_queryset, uuid=uuid)
         sale = product_sale.sale
         sale.sale_amount_with_tax -= product_sale.price + product_sale.tax_amount
         sale.tax_amount -= product_sale.tax_amount
@@ -412,6 +528,9 @@ class ProductSalesViewset(ViewSet):
 class CustomerViewset(ViewSet):
     """API endpoint that allows customer to be viewed or edited"""
 
+    serializer_class = CustomerSerializer
+    lookup_field = "uuid"
+
     @property
     def queryset(self):
         return Customer.objects.all()
@@ -421,9 +540,20 @@ class CustomerViewset(ViewSet):
         serializer = CustomerSerializer(self.queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Customer.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Retrieves a Customer given its associated identifier"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
+        customer = get_object_or_404(self.queryset, uuid=uuid)
         serializer = CustomerSerializer(customer)
         return Response(serializer.data)
 
@@ -435,33 +565,69 @@ class CustomerViewset(ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Customer.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Updates a Customer given its associated identifier"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
+        customer = get_object_or_404(self.queryset, uuid=uuid)
         serializer = CustomerSerializer(customer, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Customer.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """updates a customer partially given it's identifier"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
+        customer = get_object_or_404(self.queryset, uuid=uuid)
         serializer = CustomerSerializer(customer, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Customer.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """deletes an existing Customer"""
-        customer = get_object_or_404(self.queryset, uuid=pk)
+        customer = get_object_or_404(self.queryset, uuid=uuid)
         customer.delete()
         return Response(status=204)
 
 
 class PaymentModeViewSet(ViewSet):
     """API endpoint that allows payment mode to be viewed or edited"""
+
+    serializer_class = PaymentModeSerializer
+    lookup_field = "uuid"
 
     @property
     def queryset(self):
@@ -472,9 +638,20 @@ class PaymentModeViewSet(ViewSet):
         serializer = PaymentModeSerializer(self.queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Payment Mode.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Retrieves a Customer given its associated identifier"""
-        payment = get_object_or_404(self.queryset, uuid=pk)
+        payment = get_object_or_404(self.queryset, uuid=uuid)
         serializer = PaymentModeSerializer(payment)
         return Response(serializer.data)
 
@@ -486,27 +663,60 @@ class PaymentModeViewSet(ViewSet):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Payment Mode.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Updates a Customer given its associated identifier"""
-        payment = get_object_or_404(self.queryset, uuid=pk)
+        payment = get_object_or_404(self.queryset, uuid=uuid)
         serializer = PaymentModeSerializer(payment, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Payment Mode.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """updates a customer partially given it's identifier"""
-        payment = get_object_or_404(self.queryset, uuid=pk)
+        payment = get_object_or_404(self.queryset, uuid=uuid)
         serializer = PaymentModeSerializer(payment, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Payment Mode.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """deletes an existing Customer"""
-        payment = get_object_or_404(self.queryset, uuid=pk)
+        payment = get_object_or_404(self.queryset, uuid=uuid)
         payment.delete()
         return Response(status=204)
 

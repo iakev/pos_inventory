@@ -33,7 +33,7 @@ urlpatterns += [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
-    path("api/v1/", include("pos_inventory.urls"), name="api-categories"),
+    path("api/v1/", include("pos_inventory.urls"), name="api-urls"),
     # path("api/v1/", include("products.urls"), name="api-products"),
     # path("api/v1/", include("sales.urls"), name="api-sales"),
 ]
