@@ -16,14 +16,14 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 
 from products.models import Product, Stock
-from sales.models import (PaymentMode, ProductSales, Sales, Customer, Supplier, Purchase)
+from sales.models import PaymentMode, ProductSales, Sales, Customer, Supplier, Purchase
 from administration.models import Employee, Business
 from .serializers import (
     PaymentModeSerializer,
     ProductSalesSerializer,
     SalesSerializer,
     CustomerSerializer,
-    PurchaseSerializer
+    PurchaseSerializer,
 )
 
 
@@ -720,40 +720,55 @@ class PaymentModeViewSet(ViewSet):
         payment.delete()
         return Response(status=204)
 
+
 class PurchaseViewset(ViewSet):
-    """"API endpoint that allows purchases to viewed and edited"""
+    """ "API endpoint that allows purchases to viewed and edited"""
+
+    serializer_class = PurchaseSerializer
+    lookup_field = "uuid"
 
     @property
     def stock_queryset(self):
         return Stock.objects.all()
-    
+
     @property
     def supplier_queryset(self):
         return Supplier.objects.all()
-    
+
     @property
     def employee_queryset(self):
         return Employee.objects.all()
-    
+
     @property
     def purchase_queryset(self):
         return Purchase.objects.all()
-    
+
     @property
     def product_queryset(self):
         return Product.objects.all()
-    
+
     def list(self, request, *args, **kwargs):
-        """list all purchases """
+        """list all purchases"""
         serializer = PurchaseSerializer(self.purchase_queryset, many=True)
         return Response(serializer.data)
-    
-    def retrieve(self, request, pk=None):
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Purchase.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
         """Return a single purchase"""
-        purchase= get_object_or_404(self.purchase_queryset, uuid=pk)
+        purchase = get_object_or_404(self.purchase_queryset, uuid=uuid)
         serializer = PurchaseSerializer(purchase)
         return Response(serializer.data)
-    
+
     def create(self, request, *args, **kwargs):
         """create a new purchase"""
         print(request.data)
@@ -774,37 +789,74 @@ class PurchaseViewset(ViewSet):
         print(data)
         serializer = PurchaseSerializer(data=data)
         if serializer.is_valid():
-            stock.update_stock_quantity(Stock.StockInOutType.Purchase, product_quantity, "Purchase Made")
+            stock.update_stock_quantity(
+                Stock.StockInOutType.Purchase, product_quantity, "Purchase Made"
+            )
             stock.save()
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.data, status=400)
-    
-    def update(self, request, pk=None):
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Purchase.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
         """Update a ProductSale"""
-        purchase = get_object_or_404(self.purchase_queryset, uuid=pk)
+        purchase = get_object_or_404(self.purchase_queryset, uuid=uuid)
         serializer = PurchaseSerializer(purchase, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def partial_update(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Purchase.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
         """Update a ProductSale"""
-        purchase = get_object_or_404(self.purchase_queryset, uuid=pk)
-        serializer = PurchaseSerializer(purchase, data=request.data,partial=True)
+        purchase = get_object_or_404(self.purchase_queryset, uuid=uuid)
+        serializer = PurchaseSerializer(purchase, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-    def destroy(self, request, pk=None):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Purchase.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
         """Delete a ProductSale"""
-        purchase = get_object_or_404(self.purchase_queryset, uuid=pk)
+        purchase = get_object_or_404(self.purchase_queryset, uuid=uuid)
         product = purchase.product_id
         stock = get_object_or_404(self.stock_queryset, product_id=product)
         stock.update_stock_quantity(
-            Stock.StockInOutType.Discarding,  purchase.product_quantity, "Purchase undone"
+            Stock.StockInOutType.Discarding,
+            purchase.product_quantity,
+            "Purchase undone",
         )
         stock.save()
         purchase.delete()
