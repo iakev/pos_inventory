@@ -1271,6 +1271,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/products/{uuid}/list_suppliers/:
+    get:
+      operationId: api_v1_products_list_suppliers_retrieve
+      description: List all suppliers of a product
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Product.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
   /api/v1/products/search/:
     post:
       operationId: api_v1_products_search_create
@@ -1447,6 +1471,161 @@ paths:
           type: string
           format: uuid
         description: A unique identifier identifying this ProductSale.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/purchases/:
+    get:
+      operationId: api_v1_purchases_list
+      description: list all purchases
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Purchase'
+          description: ''
+    post:
+      operationId: api_v1_purchases_create
+      description: create a new purchase
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+  /api/v1/purchases/{uuid}/:
+    get:
+      operationId: api_v1_purchases_retrieve
+      description: Return a single purchase
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Purchase.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+    put:
+      operationId: api_v1_purchases_update
+      description: Update a ProductSale
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Purchase.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Purchase'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+    patch:
+      operationId: api_v1_purchases_partial_update
+      description: Update a ProductSale
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Purchase.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchase'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchase'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchase'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchase'
+          description: ''
+    delete:
+      operationId: api_v1_purchases_destroy
+      description: Delete a ProductSale
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Purchase.
         required: true
       tags:
       - api
@@ -3084,6 +3263,42 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedPurchase:
+      type: object
+      description: Serializer for Purchase model
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        user_id:
+          type: integer
+          nullable: true
+        supplier_id:
+          type: integer
+          nullable: true
+        product_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        product_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        purchase_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
     PatchedSales:
       type: object
       description: Serializer for Sales model
@@ -3439,6 +3654,46 @@ components:
         * `1` - Raw Material
         * `2` - Finished Product
         * `3` - Service Without Stock
+    Purchase:
+      type: object
+      description: Serializer for Purchase model
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        user_id:
+          type: integer
+          nullable: true
+        supplier_id:
+          type: integer
+          nullable: true
+        product_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        product_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        purchase_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+      required:
+      - created_at
+      - updated_at
+      - uuid
     ReceiptTypeEnum:
       enum:
       - S
