@@ -22,11 +22,13 @@ from .serializers import (
     SupplierSerializer,
     SupplierProductSerializer,
 )
+from .permissions import CategoryAccessPolicy
 
 
 class CategoryViewSet(ViewSet):
     """Basic viewset for Category Related Items"""
 
+    permission_classes = (CategoryAccessPolicy,)
     serializer_class = CategorySerializer
     lookup_field = "uuid"
 
@@ -258,10 +260,21 @@ class ProductViewSet(ViewSet):
         product.delete()
         return Response(status=204)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
     @action(detail=True, methods=["get"])
-    def list_suppliers(self, request, pk=None):
+    def list_suppliers(self, request, uuid=None):
         """List all suppliers of a product"""
-        product = get_object_or_404(self.product_queryset, uuid=pk)
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
         product_suppliers = product.supplierproduct_set.all()
         suppliers = []
         for product_supplier in product_suppliers:
