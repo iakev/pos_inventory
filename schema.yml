@@ -501,11 +501,11 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '200':
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_categories_update
@@ -536,11 +536,11 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '200':
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_categories_partial_update
@@ -570,11 +570,11 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '200':
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_categories_destroy
@@ -593,11 +593,15 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '204':
-          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
   /api/v1/categories/{uuid}/list_all_products/:
     get:
-      operationId: api_v1_categories_list_all_products_retrieve
+      operationId: api_v1_categories_list_all_products_list
       description: List all products in a category
       parameters:
       - in: path
@@ -617,7 +621,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/categories/search/:
     post:
@@ -2910,6 +2922,12 @@ components:
       - phone_number
       - updated_at
       - uuid
+    NotFound:
+      type: object
+      properties:
+        detail:
+          type: string
+          default: Unfortunately requested resource not found
     NullEnum:
       enum:
       - null
