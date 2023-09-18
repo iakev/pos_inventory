@@ -9,6 +9,7 @@ from django.db.models import Q
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
@@ -21,6 +22,7 @@ from .serializers import (
     StockSerializer,
     SupplierSerializer,
     SupplierProductSerializer,
+    NotFoundSerializer,
 )
 from .permissions import CategoryAccessPolicy
 
@@ -51,6 +53,9 @@ class CategoryViewSet(ViewSet):
                 location=OpenApiParameter.PATH,
             )
         ],
+        responses={
+            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+        },
     )
     def retrieve(self, request, uuid=None):
         """Return a single category"""
@@ -76,6 +81,9 @@ class CategoryViewSet(ViewSet):
                 location=OpenApiParameter.PATH,
             )
         ],
+        responses={
+            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+        },
     )
     def update(self, request, uuid=None):
         """Update an existing category"""
@@ -96,6 +104,9 @@ class CategoryViewSet(ViewSet):
                 location=OpenApiParameter.PATH,
             )
         ],
+        responses={
+            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+        },
     )
     def partial_update(self, request, uuid=None):
         """Update an existing category"""
@@ -116,6 +127,9 @@ class CategoryViewSet(ViewSet):
                 location=OpenApiParameter.PATH,
             )
         ],
+        responses={
+            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+        },
     )
     def destroy(self, request, uuid=None):
         """Delete an existing category"""
@@ -144,6 +158,10 @@ class CategoryViewSet(ViewSet):
                 location=OpenApiParameter.PATH,
             )
         ],
+        responses={
+            status.HTTP_200_OK: ProductSerializer(many=True),
+            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+        },
     )
     @action(detail=True, methods=["GET"])
     def list_all_products(self, request, uuid=None):
