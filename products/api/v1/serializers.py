@@ -156,3 +156,7 @@ class SupplierProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupplierProduct
         fields = ["supplier", "product"]
+
+
+class NotFoundSerializer(serializers.Serializer):
+    detail = serializers.CharField(default="Unfortunately requested resource not found")
