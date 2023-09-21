@@ -25,12 +25,6 @@ class BusinessViewset(ViewSet):
     def queryset(self):
         return Business.objects.all()
 
-    def get_schema_operation_parameters(self, path, path_regex):
-        parameters = super().get_schema_operation_parameters(path, path_regex)
-        # Filter out the 'id' parameter from the list of parameters
-        parameters = [param for param in parameters if param.name != "id"]
-        return parameters
-
     def list(self, request, *args, **kwargs):
         """Returns a list of business"""
         serializer = BusinessSerializer(self.queryset, many=True)
