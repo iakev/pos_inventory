@@ -38,28 +38,6 @@ class PaymentModeSerializer(serializers.ModelSerializer):
         model = PaymentMode
         fields = ["uuid", "payment_method", "properties"]
 
-    def create(self, validated_data):
-        """Create a new payment mode"""
-        properties = validated_data.pop(
-            "properties", {}
-        )  # Get the properties data or an empty dictionary if not provided
-        payment_mode = PaymentMode(**validated_data)
-        payment_mode.properties = properties
-        payment_mode.save()
-        return payment_mode
-
-    def update(self, payment, validated_data):
-        """Update a payment mode instance"""
-        properties_data = validated_data.pop(
-            "properties", None
-        )  # Get the properties data or an empty dictionary if not provided
-        if properties_data:
-            payment.properties = properties_data
-        payment.mode = validated_data.get("mode", payment.mode)
-        payment.save()
-        return payment
-
-
 class SalesSerializer(serializers.ModelSerializer):
     """
     Serializer for Sales model
