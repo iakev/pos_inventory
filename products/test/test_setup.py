@@ -20,7 +20,7 @@ class TestSetUp(APITestCase):
 
     def setUp(self) -> None:
         self.auth_user = self.authenticate_user()
-        self.business_url = reverse("business-list")
+        self.products = reverse("business-list")
         self.supplier_data = {
         "name": "merchstores",
         "address": "Duruma road",

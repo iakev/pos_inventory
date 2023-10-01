@@ -15,5 +15,5 @@ class TestModels(TestSetUp):
     @pytest.mark.django_db
     def test_business_can_be_created_after_authentication(self):
         """Test that a business can be created after authentication"""
-        res = self.auth_user.post(self.business_url)
-        assert res.content
+        res = self.auth_user.post(self.business_url, self.supplier_data, format="json")
+        assert  res.content
