@@ -42,9 +42,7 @@ class PaymentMode(models.Model):
         OTHER = "07", _("OTHER")
 
     uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
-    payment_method = models.CharField(
-        max_length=2, choices=PaymentMethod.choices, default=PaymentMethod.CASH
-    )
+    payment_method = models.CharField(max_length=2, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
     properties = models.JSONField(null=True, blank=True)
 
     class Meta:
@@ -102,39 +100,45 @@ class Sales(models.Model):
         TRAINING = "T", _("Training")
 
     uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
-    customer_id = models.ForeignKey(
-        Customer, related_name="sales", on_delete=models.CASCADE, null=True, blank=True
+    customer = models.ForeignKey(Customer, related_name="sales", on_delete=models.SET_NULL, null=True, blank=True)
+    business = models.ForeignKey(
+        Business,
+        related_name="sale",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        default=Business.objects.first().id,
     )
-    business_id = models.ForeignKey(
-        Business, related_name="sale", on_delete=models.CASCADE, null=True, blank=True
-    )
-    payment_id = models.ForeignKey(
+    payment = models.ForeignKey(
         PaymentMode,
         related_name="sales",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
+        default=PaymentMode.PaymentMethod.CASH,
     )
-    cashier_id = models.ForeignKey(
-        Employee, related_name="sales", on_delete=models.CASCADE, null=True, blank=True
-    )
-    products = models.ManyToManyField(
-        Product, related_name="sales", through="ProductSales"
-    )
-    sale_amount_with_tax = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00
-    )
-    tax_amount = models.DecimalField(
-        max_digits=10, blank=True, default=0.00, decimal_places=2
-    )
-    receipt_type = models.CharField(max_length=2, choices=SalesReceiptType.choices)
-    transaction_type = models.CharField(max_length=2, choices=TransactionType.choices)
+    employee = models.ForeignKey(Employee, related_name="sales", on_delete=models.SET_NULL, null=True, blank=True)
+    products = models.ManyToManyField(Product, related_name="sales", through="ProductSales")
+    sale_amount_with_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    tax_amount = models.DecimalField(max_digits=10, blank=True, default=0.00, decimal_places=2)
+    receipt_type = models.CharField(max_length=2, choices=SalesReceiptType.choices, default="S")
+    transaction_type = models.CharField(max_length=2, choices=TransactionType.choices, default="N")
     sale_status = models.CharField(
-        max_length=3, choices=TransactionProgress.choices, null=True, blank=True
+        max_length=3,
+        choices=TransactionProgress.choices,
+        null=True,
+        blank=True,
+        default="01",
     )
-    receipt_label = models.CharField(max_length=5)
+    receipt_label = models.CharField(max_length=5, default="NS")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # Having the amount_paid by default as 0.00 but
+    # for completed_sale we update with amount paid for record keeping purposes
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    ## One can consider if there is need to store change information for cash transactions
+    # However, this is for a later update
+    change = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     class Meta:
         verbose_name_plural = "sales"
@@ -153,21 +157,18 @@ class Sales(models.Model):
         reset_dict = {1: 0, 5: 0, 10: 0, 20: 0, 50: 0, 100: 0, 200: 0, 500: 0, 1000: 0}
 
         # Copy reset_dict values to properties field
-        if self.payment_id:
-            self.payment_id.properties.update(reset_dict)
-            self.payment_id.save()
+        if self.payment:
+            self.payment.properties.update(reset_dict)
+            self.payment.save()
 
     def generate_change(self, sale_amount, amount_paid):
         """
         Generate the change to be given
         """
-        properties = self.payment_id.properties
+        properties = self.payment.properties
 
         # Calculate the total cash in the till
-        total_cash = sum(
-            int(denomination) * quantity
-            for denomination, quantity in properties.items()
-        )
+        total_cash = sum(int(denomination) * quantity for denomination, quantity in properties.items())
 
         change = amount_paid - sale_amount
         if total_cash == 0:
@@ -223,34 +224,47 @@ class ProductSales(models.Model):
     """
 
     uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
-    product = models.ForeignKey(
-        Product, related_name="product_sales", on_delete=models.CASCADE
-    )
-    sale = models.ForeignKey(
-        Sales, related_name="product_sales", on_delete=models.CASCADE
-    )
+    product = models.ForeignKey(Product, related_name="product_sales", on_delete=models.CASCADE)
+    sale = models.ForeignKey(Sales, related_name="product_sales", on_delete=models.CASCADE)
     quantity_sold = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     price_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_wholesale = models.BooleanField(default=False)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    tax_rate = models.CharField(max_length=5)
+    tax_rate = models.CharField(max_length=5, default="B")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
 
 class Purchase(models.Model):
     """Model with purchase information"""
+
     uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
-    user_id = models.ForeignKey(Employee, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
-    supplier_id = models.OneToOneField(Supplier, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
-    product_id = models.ForeignKey(Stock, related_name="purchases", on_delete=models.CASCADE, null=True, blank=True)
+    employee = models.ForeignKey(
+        Employee,
+        related_name="purchases",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    products = models.ManyToManyField(Product, related_name="purchases", through="PurchaseProduct")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    product_quantity = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00
-    )
-    purchase_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.00
-    )
+    purchase_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    description = models.TextField(blank=True, null=True)
+
+
+class PurchaseProduct(models.Model):
+    """Through table for Purchase Stock many to many relationship"""
+
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    product = models.ForeignKey(Product, related_name="purchase_products", on_delete=models.CASCADE)
+    purchase = models.ForeignKey(Purchase, related_name="purchase_products", on_delete=models.CASCADE)
+    supplier = models.ForeignKey(Supplier, related_name="purchase_products", on_delete=models.CASCADE)
+    product_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    purchase_unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_product_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    discount_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     description = models.TextField(blank=True, null=True)
