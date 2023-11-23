@@ -148,139 +148,6 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /api/users/:
-    get:
-      operationId: api_users_list
-      parameters:
-      - name: limit
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: offset
-        required: false
-        in: query
-        description: The initial index from which to return the results.
-        schema:
-          type: integer
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - tokenAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedUserList'
-          description: ''
-  /api/users/{username}/:
-    get:
-      operationId: api_users_retrieve
-      parameters:
-      - in: path
-        name: username
-        schema:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - tokenAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
-    put:
-      operationId: api_users_update
-      parameters:
-      - in: path
-        name: username
-        schema:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-        required: true
-      tags:
-      - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/User'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/User'
-        required: true
-      security:
-      - cookieAuth: []
-      - tokenAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
-    patch:
-      operationId: api_users_partial_update
-      parameters:
-      - in: path
-        name: username
-        schema:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-        required: true
-      tags:
-      - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedUser'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedUser'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedUser'
-      security:
-      - cookieAuth: []
-      - tokenAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
-  /api/users/me/:
-    get:
-      operationId: api_users_me_retrieve
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - tokenAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
   /api/v1/business/:
     get:
       operationId: api_v1_business_list
@@ -344,11 +211,11 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '200':
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Business'
+                $ref: '#/components/schemas/AdministrationNotFound'
           description: ''
     put:
       operationId: api_v1_business_update
@@ -379,11 +246,11 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '200':
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Business'
+                $ref: '#/components/schemas/AdministrationNotFound'
           description: ''
     patch:
       operationId: api_v1_business_partial_update
@@ -413,11 +280,11 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '200':
+        '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Business'
+                $ref: '#/components/schemas/AdministrationNotFound'
           description: ''
     delete:
       operationId: api_v1_business_destroy
@@ -436,8 +303,35 @@ paths:
       - cookieAuth: []
       - tokenAuth: []
       responses:
-        '204':
-          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdministrationNotFound'
+          description: ''
+  /api/v1/business/{uuid}/list_all_owners/:
+    get:
+      operationId: api_v1_business_list_all_owners_retrieve
+      description: Lists all owners of the business
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Business'
+          description: ''
   /api/v1/categories/:
     get:
       operationId: api_v1_categories_list
@@ -505,7 +399,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                $ref: '#/components/schemas/ProductNotFound'
           description: ''
     put:
       operationId: api_v1_categories_update
@@ -540,7 +434,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                $ref: '#/components/schemas/ProductNotFound'
           description: ''
     patch:
       operationId: api_v1_categories_partial_update
@@ -574,7 +468,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                $ref: '#/components/schemas/ProductNotFound'
           description: ''
     delete:
       operationId: api_v1_categories_destroy
@@ -597,7 +491,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                $ref: '#/components/schemas/ProductNotFound'
           description: ''
   /api/v1/categories/{uuid}/list_all_products/:
     get:
@@ -623,13 +517,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductSansSupplierResponse'
           description: ''
         '404':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFound'
+                $ref: '#/components/schemas/ProductNotFound'
           description: ''
   /api/v1/categories/search/:
     post:
@@ -641,13 +535,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Category'
+              $ref: '#/components/schemas/CategorySearch'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Category'
+              $ref: '#/components/schemas/CategorySearch'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Category'
+              $ref: '#/components/schemas/CategorySearch'
         required: true
       security:
       - cookieAuth: []
@@ -657,7 +551,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductNotFound'
           description: ''
   /api/v1/customers/:
     get:
@@ -971,10 +873,10 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v1/paymentmodes/:
+  /api/v1/owners/:
     get:
-      operationId: api_v1_paymentmodes_list
-      description: Returns a list of Customer
+      operationId: api_v1_owners_list
+      description: Returns a lists of business owners
       tags:
       - api
       security:
@@ -987,11 +889,208 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PaymentMode'
+                  $ref: '#/components/schemas/OwnerResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    post:
+      operationId: api_v1_owners_create
+      description: Creates a  new owner
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Owner'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Owner'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Owner'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnerResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+  /api/v1/owners/{uuid}/:
+    get:
+      operationId: api_v1_owners_retrieve
+      description: Retrieves a owner given its associated identifier
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this owner.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnerResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    put:
+      operationId: api_v1_owners_update
+      description: Updates a owner given its associated identifier
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this owner.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Owner'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Owner'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Owner'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnerResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    patch:
+      operationId: api_v1_owners_partial_update
+      description: updates a owner partially given it's identifier
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this owner.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOwner'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOwner'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOwner'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OwnerResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    delete:
+      operationId: api_v1_owners_destroy
+      description: deletes an existing owner
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this owner.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdministrationNotFound'
+          description: ''
+  /api/v1/paymentmodes/:
+    get:
+      operationId: api_v1_paymentmodes_list
+      description: Returns a list of all PaymentModes
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentModeResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_paymentmodes_create
-      description: Creates a  new customer
+      description: Creates a  new PaymentMode
       tags:
       - api
       requestBody:
@@ -1013,12 +1112,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentMode'
+                $ref: '#/components/schemas/PaymentModeResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/paymentmodes/{uuid}/:
     get:
       operationId: api_v1_paymentmodes_retrieve
-      description: Retrieves a Customer given its associated identifier
+      description: Retrieves a PaymentMode given its associated identifier
       parameters:
       - in: path
         name: uuid
@@ -1037,11 +1142,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentMode'
+                $ref: '#/components/schemas/PaymentModeResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_paymentmodes_update
-      description: Updates a Customer given its associated identifier
+      description: Updates a PaymentMode given its associated identifier
       parameters:
       - in: path
         name: uuid
@@ -1071,11 +1182,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentMode'
+                $ref: '#/components/schemas/PaymentModeResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_paymentmodes_partial_update
-      description: updates a customer partially given it's identifier
+      description: updates a PaymentMode partially given it's identifier
       parameters:
       - in: path
         name: uuid
@@ -1105,11 +1222,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentMode'
+                $ref: '#/components/schemas/PaymentModeResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_paymentmodes_destroy
-      description: deletes an existing Customer
+      description: deletes an existing PaymentMode
       parameters:
       - in: path
         name: uuid
@@ -1142,7 +1265,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_products_create
@@ -1169,7 +1298,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/products/{uuid}/:
     get:
@@ -1193,7 +1328,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_products_update
@@ -1228,7 +1369,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_products_partial_update
@@ -1262,7 +1409,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_products_destroy
@@ -1285,8 +1438,8 @@ paths:
           description: No response body
   /api/v1/products/{uuid}/list_suppliers/:
     get:
-      operationId: api_v1_products_list_suppliers_retrieve
-      description: List all suppliers of a product
+      operationId: api_v1_products_list_suppliers_list
+      description: Retrieves a list of suppliers for a particular Product.
       parameters:
       - in: path
         name: uuid
@@ -1305,25 +1458,119 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductListSuppliers'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductNotFound'
+          description: ''
+  /api/v1/products/{uuid}/purchase_information/:
+    get:
+      operationId: api_v1_products_purchase_information_retrieve
+      description: Retrieves Purchase Information for a particular Product.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Product.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductNotFound'
+          description: ''
+  /api/v1/products/{uuid}/sale_information/:
+    get:
+      operationId: api_v1_products_sale_information_list
+      description: Retrieves Sale Information for a particular Product.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Product.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductNotFound'
+          description: ''
+  /api/v1/products/{uuid}/stock_information/:
+    get:
+      operationId: api_v1_products_stock_information_retrieve
+      description: Retrieves a Stock Information for a particular Product.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Product.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListStock'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductNotFound'
           description: ''
   /api/v1/products/search/:
     post:
       operationId: api_v1_products_search_create
-      description: Searches and enumerates possible products matching query
+      description: Retrieves a list of Products according to query.
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductSearch'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductSearch'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductSearch'
         required: true
       security:
       - cookieAuth: []
@@ -1333,7 +1580,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
           description: ''
   /api/v1/productsales/:
     get:
@@ -1351,7 +1600,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProductSales'
+                  $ref: '#/components/schemas/ProductSalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_productsales_create
@@ -1378,7 +1633,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductSales'
+                $ref: '#/components/schemas/ProductSalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/productsales/{uuid}/:
     get:
@@ -1402,7 +1663,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductSales'
+                $ref: '#/components/schemas/ProductSalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_productsales_update
@@ -1421,13 +1688,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductSales'
+              $ref: '#/components/schemas/ProductSaleUpdate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ProductSales'
+              $ref: '#/components/schemas/ProductSaleUpdate'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ProductSales'
+              $ref: '#/components/schemas/ProductSaleUpdate'
         required: true
       security:
       - cookieAuth: []
@@ -1437,7 +1704,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductSales'
+                $ref: '#/components/schemas/ProductSalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_productsales_partial_update
@@ -1456,13 +1729,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedProductSales'
+              $ref: '#/components/schemas/PatchedProductSaleUpdate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedProductSales'
+              $ref: '#/components/schemas/PatchedProductSaleUpdate'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedProductSales'
+              $ref: '#/components/schemas/PatchedProductSaleUpdate'
       security:
       - cookieAuth: []
       - tokenAuth: []
@@ -1471,7 +1744,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductSales'
+                $ref: '#/components/schemas/ProductSalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_productsales_destroy
@@ -1483,6 +1762,193 @@ paths:
           type: string
           format: uuid
         description: A unique identifier identifying this ProductSale.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/purchaseproducts/:
+    get:
+      operationId: api_v1_purchaseproducts_list
+      description: list all PurchaseProducts
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    post:
+      operationId: api_v1_purchaseproducts_create
+      description: Create a new PurchaseProduct
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseProduct'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseProduct'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseProduct'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+  /api/v1/purchaseproducts/{uuid}/:
+    get:
+      operationId: api_v1_purchaseproducts_retrieve
+      description: Return a single PurchaseProduct
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this PurchaseStock.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    put:
+      operationId: api_v1_purchaseproducts_update
+      description: Update a PurchaseProduct
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this PurchaseProduct.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseProduct'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PurchaseProduct'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PurchaseProduct'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    patch:
+      operationId: api_v1_purchaseproducts_partial_update
+      description: Update a PurchaseProduct
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this PurchaseProduct.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseProduct'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseProduct'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPurchaseProduct'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    delete:
+      operationId: api_v1_purchaseproducts_destroy
+      description: Delete a PurchaseProduct
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this PurchaseProduct.
         required: true
       tags:
       - api
@@ -1508,7 +1974,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Purchase'
+                  $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_purchases_create
@@ -1526,6 +1998,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Purchase'
+        required: true
       security:
       - cookieAuth: []
       - tokenAuth: []
@@ -1534,7 +2007,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purchase'
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/purchases/{uuid}/:
     get:
@@ -1558,11 +2037,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purchase'
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_purchases_update
-      description: Update a ProductSale
+      description: Update a Purchase
       parameters:
       - in: path
         name: uuid
@@ -1584,6 +2069,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Purchase'
+        required: true
       security:
       - cookieAuth: []
       - tokenAuth: []
@@ -1592,11 +2078,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purchase'
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_purchases_partial_update
-      description: Update a ProductSale
+      description: Update a Purchase
       parameters:
       - in: path
         name: uuid
@@ -1626,11 +2118,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Purchase'
+                $ref: '#/components/schemas/PurchaseResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_purchases_destroy
-      description: Delete a ProductSale
+      description: Delete a Purchase
       parameters:
       - in: path
         name: uuid
@@ -1663,7 +2161,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Sales'
+                  $ref: '#/components/schemas/SalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_sales_create
@@ -1690,7 +2194,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sales'
+                $ref: '#/components/schemas/SalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/sales/{uuid}/:
     get:
@@ -1714,7 +2224,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sales'
+                $ref: '#/components/schemas/SalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_sales_update
@@ -1749,7 +2265,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sales'
+                $ref: '#/components/schemas/SalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_sales_partial_update
@@ -1783,7 +2305,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Sales'
+                $ref: '#/components/schemas/SalesResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_sales_destroy
@@ -1844,8 +2372,8 @@ paths:
     post:
       operationId: api_v1_sales_generate_receipt_create
       description: |-
-        Complete a Sale by adding the requisite data and creating the related
-        product sale object
+        Complete a Sale by adding the requisite data, setting status and
+        and amount_paid and generating a receipt/receipt_data
       parameters:
       - in: path
         name: uuid
@@ -1860,13 +2388,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Sales'
+              $ref: '#/components/schemas/GenerateSaleReceipt'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Sales'
+              $ref: '#/components/schemas/GenerateSaleReceipt'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Sales'
+              $ref: '#/components/schemas/GenerateSaleReceipt'
         required: true
       security:
       - cookieAuth: []
@@ -1877,6 +2405,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Sales'
+          description: ''
+  /api/v1/sales/{uuid}/get_products_information/:
+    post:
+      operationId: api_v1_sales_get_products_information_create
+      description: |-
+        Get all products and product_sale_info related
+        to a speciic sale
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this sale.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSalesResponse'
           description: ''
   /api/v1/sales/generate_sales_report/:
     post:
@@ -1888,13 +2442,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Sales'
+              $ref: '#/components/schemas/GenerateSalesReport'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Sales'
+              $ref: '#/components/schemas/GenerateSalesReport'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Sales'
+              $ref: '#/components/schemas/GenerateSalesReport'
         required: true
       security:
       - cookieAuth: []
@@ -1906,6 +2460,193 @@ paths:
               schema:
                 $ref: '#/components/schemas/Sales'
           description: ''
+  /api/v1/stockmovement/:
+    get:
+      operationId: api_v1_stockmovement_list
+      description: List all StockMovements
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockMovementResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    post:
+      operationId: api_v1_stockmovement_create
+      description: Create a new StockMovement
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StockMovement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StockMovement'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+  /api/v1/stockmovement/{uuid}/:
+    get:
+      operationId: api_v1_stockmovement_retrieve
+      description: Retun a single StockMovement
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this StockMovement
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    put:
+      operationId: api_v1_stockmovement_update
+      description: Update a StockMovement
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this StockMovement.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockMovement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StockMovement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StockMovement'
+        required: true
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    patch:
+      operationId: api_v1_stockmovement_partial_update
+      description: Update a StockMovement
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this StockMovement.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStockMovement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStockMovement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStockMovement'
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockMovementResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: ''
+    delete:
+      operationId: api_v1_stockmovement_destroy
+      description: Delete a StockMovement
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this StockMovement.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/stocks/:
     get:
       operationId: api_v1_stocks_list
@@ -1922,7 +2663,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Stock'
+                  $ref: '#/components/schemas/StockResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_stocks_create
@@ -1949,7 +2696,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stock'
+                $ref: '#/components/schemas/StockResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/stocks/{uuid}/:
     get:
@@ -1973,7 +2726,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stock'
+                $ref: '#/components/schemas/StockResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_stocks_update
@@ -2008,7 +2767,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stock'
+                $ref: '#/components/schemas/StockResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_stocks_partial_update
@@ -2042,7 +2807,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stock'
+                $ref: '#/components/schemas/StockResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_stocks_destroy
@@ -2063,10 +2834,11 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v1/stocks/{uuid}/stock_movement/:
+  /api/v1/stocks/{uuid}/list_all_stock_movements/:
     post:
-      operationId: api_v1_stocks_stock_movement_create
-      description: Method that updates stock according to the typr of movement
+      operationId: api_v1_stocks_list_all_stock_movements_create
+      description: Returns a list of all stock movements associated with a particular
+        stock
       parameters:
       - in: path
         name: uuid
@@ -2077,18 +2849,6 @@ paths:
         required: true
       tags:
       - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Stock'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Stock'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Stock'
-        required: true
       security:
       - cookieAuth: []
       - tokenAuth: []
@@ -2097,7 +2857,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stock'
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockMovementAvecProductResponse'
           description: ''
   /api/v1/stocks/generate_stock_movement_report/:
     post:
@@ -2109,13 +2871,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Stock'
+              $ref: '#/components/schemas/GenerateStockMovementReport'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Stock'
+              $ref: '#/components/schemas/GenerateStockMovementReport'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Stock'
+              $ref: '#/components/schemas/GenerateStockMovementReport'
         required: true
       security:
       - cookieAuth: []
@@ -2130,21 +2892,20 @@ paths:
   /api/v1/stocks/search/:
     post:
       operationId: api_v1_stocks_search_create
-      description: Returns stock information for product name, description or code  in
-        query
+      description: Retrieves a list of Products according to query.
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Stock'
+              $ref: '#/components/schemas/StockSearch'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Stock'
+              $ref: '#/components/schemas/StockSearch'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Stock'
+              $ref: '#/components/schemas/StockSearch'
         required: true
       security:
       - cookieAuth: []
@@ -2154,7 +2915,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stock'
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockResponse'
           description: ''
   /api/v1/supplierproducts/:
     get:
@@ -2172,7 +2935,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SupplierProduct'
+                  $ref: '#/components/schemas/SupplierProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_supplierproducts_create
@@ -2199,7 +2968,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SupplierProduct'
+                $ref: '#/components/schemas/SupplierProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/supplierproducts/{uuid}/:
     get:
@@ -2223,7 +2998,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SupplierProduct'
+                $ref: '#/components/schemas/SupplierProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_supplierproducts_update
@@ -2258,7 +3039,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SupplierProduct'
+                $ref: '#/components/schemas/SupplierProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_supplierproducts_partial_update
@@ -2292,7 +3079,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SupplierProduct'
+                $ref: '#/components/schemas/SupplierProductResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_supplierproducts_destroy
@@ -2313,54 +3106,6 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/v1/supplierproducts/list_all_product_supplier/:
-    get:
-      operationId: api_v1_supplierproducts_list_all_product_supplier_retrieve
-      description: List all Suppliers associated with a Product
-      parameters:
-      - in: path
-        name: uuid
-        schema:
-          type: string
-          format: uuid
-        description: A unique identifier identifying this Product.
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - tokenAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SupplierProduct'
-          description: ''
-  /api/v1/supplierproducts/list_all_supplier_products/:
-    get:
-      operationId: api_v1_supplierproducts_list_all_supplier_products_retrieve
-      description: List all SupplierProducts for a Supplier
-      parameters:
-      - in: path
-        name: uuid
-        schema:
-          type: string
-          format: uuid
-        description: A unique identifier identifying this Supplier.
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      - tokenAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SupplierProduct'
-          description: ''
   /api/v1/suppliers/:
     get:
       operationId: api_v1_suppliers_list
@@ -2377,7 +3122,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Supplier'
+                  $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_suppliers_create
@@ -2404,7 +3155,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Supplier'
+                $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/suppliers/{uuid}/:
     get:
@@ -2428,7 +3185,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Supplier'
+                $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_suppliers_update
@@ -2463,7 +3226,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Supplier'
+                $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_suppliers_partial_update
@@ -2497,7 +3266,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Supplier'
+                $ref: '#/components/schemas/SupplierResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_suppliers_destroy
@@ -2518,6 +3293,36 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/suppliers/{uuid}/list_all_products/:
+    get:
+      operationId: api_v1_suppliers_list_all_products_retrieve
+      description: List all Products associated with a Supplier
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        description: A unique identifier identifying this Supplier.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierListAllProducts'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductNotFound'
+          description: ''
   /api/v1/users/:
     get:
       operationId: api_v1_users_list
@@ -2539,12 +3344,19 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedUserList'
+                $ref: '#/components/schemas/PaginatedUserResponseList'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     post:
       operationId: api_v1_users_create
@@ -2565,12 +3377,19 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
   /api/v1/users/{id}/:
     get:
@@ -2587,12 +3406,19 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     put:
       operationId: api_v1_users_update
@@ -2620,12 +3446,19 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
       operationId: api_v1_users_partial_update
@@ -2652,12 +3485,19 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
       operationId: api_v1_users_destroy
@@ -2673,6 +3513,7 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '204':
           description: No response body
@@ -2696,6 +3537,7 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '200':
           content:
@@ -2723,6 +3565,7 @@ paths:
       security:
       - tokenAuth: []
       - cookieAuth: []
+      - {}
       responses:
         '200':
           content:
@@ -2759,6 +3602,12 @@ paths:
           description: ''
 components:
   schemas:
+    AdministrationNotFound:
+      type: object
+      properties:
+        detail:
+          type: string
+          default: Unfortunately requested resource not found
     AuthToken:
       type: object
       properties:
@@ -2811,8 +3660,6 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          $ref: '#/components/schemas/User'
       required:
       - address
       - created_at
@@ -2852,6 +3699,14 @@ components:
       - name
       - updated_at
       - uuid
+    CategorySearch:
+      type: object
+      description: Custom serializer for search request query
+      properties:
+        query:
+          type: string
+      required:
+      - query
     Customer:
       type: object
       description: Serializer for Customer model
@@ -2922,6 +3777,60 @@ components:
       - phone_number
       - updated_at
       - uuid
+    EmployeeRestricted:
+      type: object
+      description: Custom serializer for employee serializer Response in ather viewsets
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        department:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - user
+    GenerateSaleReceipt:
+      type: object
+      description: Serializer for request data to generate receipt and complete sale
+      properties:
+        payment_mode:
+          type: string
+        amount_paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - amount_paid
+      - payment_mode
+    GenerateSalesReport:
+      type: object
+      description: Serializer for request data to generate sales summary report given
+        start and end_date
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      required:
+      - end_date
+      - start_date
+    GenerateStockMovementReport:
+      type: object
+      description: |-
+        Serializer for request data to generate Stock Movement of a particular stock
+        summary report given start and end_date
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      required:
+      - end_date
+      - start_date
     NotFound:
       type: object
       properties:
@@ -2931,113 +3840,40 @@ components:
     NullEnum:
       enum:
       - null
-    PackagingUnitEnum:
-      enum:
-      - AM
-      - BA
-      - BC
-      - BE
-      - BF
-      - BG
-      - BJ
-      - BK
-      - BL
-      - BQ
-      - BR
-      - BV
-      - CA
-      - CH
-      - CJ
-      - CL
-      - CR
-      - CS
-      - CT
-      - CTN
-      - CY
-      - DR
-      - GT
-      - HH
-      - IZ
-      - JR
-      - JU
-      - JY
-      - KZ
-      - LZ
-      - NT
-      - OU
-      - PD
-      - PG
-      - PI
-      - PO
-      - PU
-      - RL
-      - RO
-      - RZ
-      - SK
-      - TY
-      - VG
-      - VL
-      - VO
-      - VQ
-      - VR
-      - VT
-      - VY
-      - ML
-      - TN
-      type: string
-      description: |-
-        * `AM` - Ampoule
-        * `BA` - Barrel
-        * `BC` - Bottlecrate
-        * `BE` - Bundle
-        * `BF` - Balloon
-        * `BG` - Bag
-        * `BJ` - Bucket
-        * `BK` - Basket
-        * `BL` - Bale
-        * `BQ` - Bottle protected cylindrical
-        * `BR` - Bar
-        * `BV` - Bottle bulbous
-        * `CA` - Can
-        * `CH` - Chest
-        * `CJ` - Coffin
-        * `CL` - Coil
-        * `CR` - Wooden Box, Wooden Case
-        * `CS` - Cassette
-        * `CT` - Carton
-        * `CTN` - Container
-        * `CY` - Cylinder
-        * `DR` - Drum
-        * `GT` - Extra Countable Item
-        * `HH` - Hand Baggage
-        * `IZ` - Ingots
-        * `JR` - Jar
-        * `JU` - Jug
-        * `JY` - Jerry CAN Cylindrical
-        * `KZ` - Canester
-        * `LZ` - Logs, in bundle/bunch/truss
-        * `NT` - Net
-        * `OU` - Non-Exterior Packaging Unit
-        * `PD` - Poddon
-        * `PG` - Plate
-        * `PI` - Pipe
-        * `PO` - Pilot
-        * `PU` - Traypack
-        * `RL` - Reel
-        * `RO` - Roll
-        * `RZ` - Rods, in bundle/bunch/truss
-        * `SK` - Skeletoncase
-        * `TY` - Tank, cylindrical
-        * `VG` - Bulk, gas(at 1031 mbar 15 oC)
-        * `VL` - Bulk, liquid(at normal temperature/pressure)
-        * `VO` - Bulk, solid, large particles(nodules)
-        * `VQ` - Bulk, gas(liquefied at abnormal temperature/pressure)
-        * `VR` - Bulk, solid, granular particles(grains)
-        * `VT` - Extra Bulk Item
-        * `VY` - Bulk, fine particles("powder")
-        * `ML` - Mills cigarette
-        * `TN` - TAN 1TAN REFER TO 20BAGS
-    PaginatedUserList:
+    Owner:
+      type: object
+      description: Serializer for the owner model
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        business_uuid:
+          type: string
+          format: uuid
+        user_uuid:
+          type: string
+          format: uuid
+      required:
+      - business_uuid
+      - user_uuid
+      - uuid
+    OwnerResponse:
+      type: object
+      description: Custom Response data serializer for owner
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        business:
+          $ref: '#/components/schemas/Business'
+      required:
+      - user
+      - uuid
+    PaginatedUserResponseList:
       type: object
       properties:
         count:
@@ -3056,7 +3892,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/User'
+            $ref: '#/components/schemas/UserResponse'
     PatchedBusiness:
       type: object
       description: Serializer for Business model
@@ -3090,8 +3926,6 @@ components:
           type: string
           nullable: true
           maxLength: 255
-        owner:
-          $ref: '#/components/schemas/User'
     PatchedCategory:
       type: object
       description: Serializer for Category model
@@ -3180,9 +4014,23 @@ components:
           type: string
           nullable: true
           maxLength: 255
+    PatchedOwner:
+      type: object
+      description: Serializer for the owner model
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        business_uuid:
+          type: string
+          format: uuid
+        user_uuid:
+          type: string
+          format: uuid
     PatchedPaymentMode:
       type: object
-      description: Serializer for PaymentMode model
+      description: Serializer for PaymentMode model Request
       properties:
         uuid:
           type: string
@@ -3195,18 +4043,23 @@ components:
           additionalProperties: {}
     PatchedProduct:
       type: object
-      description: Serializer for Product model
+      description: Serializer for Product model Request data
       properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
         category:
-          allOf:
-          - $ref: '#/components/schemas/Category'
+          type: string
+          format: uuid
           readOnly: true
         name:
           type: string
           maxLength: 255
-        uuid:
-          type: string
-          format: uuid
+        suppliers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierRelatedResponse'
           readOnly: true
         code:
           type: string
@@ -3215,11 +4068,11 @@ components:
           type: string
           nullable: true
         product_type:
-          $ref: '#/components/schemas/ProductTypeEnum'
+          type: string
         tax_type:
-          $ref: '#/components/schemas/TaxTypeEnum'
+          type: string
         unit:
-          $ref: '#/components/schemas/UnitEnum'
+          type: string
         limited:
           type: boolean
           nullable: true
@@ -3235,69 +4088,33 @@ components:
           format: date-time
           readOnly: true
         packaging_unit:
-          $ref: '#/components/schemas/PackagingUnitEnum'
-    PatchedProductSales:
+          type: string
+    PatchedProductSaleUpdate:
       type: object
-      description: Serializer for ProductSales model
+      description: Serializer tailor made for updating (partial or whole) of a ProductSale
       properties:
-        uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        product:
-          allOf:
-          - $ref: '#/components/schemas/Product'
-          readOnly: true
-        sale:
-          allOf:
-          - $ref: '#/components/schemas/ProductSalesRelatedSale'
-          readOnly: true
         quantity_sold:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        price_per_unit:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         is_wholesale:
           type: boolean
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        tax_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        tax_rate:
-          type: string
-          maxLength: 5
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
     PatchedPurchase:
       type: object
-      description: Serializer for Purchase model
+      description: Serializer for Request Purchase
       properties:
         uuid:
           type: string
           format: uuid
           readOnly: true
-        user_id:
-          type: integer
-          nullable: true
-        supplier_id:
-          type: integer
-          nullable: true
-        product_id:
-          type: integer
-          nullable: true
+        employee_uuid:
+          type: string
+          format: uuid
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -3306,11 +4123,51 @@ components:
           type: string
           format: date-time
           readOnly: true
+        purchase_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+    PatchedPurchaseProduct:
+      type: object
+      description: Serializer for Request PurchaseStock ViewSet
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        product_uuid:
+          type: string
+          format: uuid
+        purchase_uuid:
+          type: string
+          format: uuid
+        supplier_uuid:
+          type: string
+          format: uuid
         product_quantity:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        purchase_amount:
+        purchase_unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_product_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        discount_applied:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
@@ -3325,22 +4182,18 @@ components:
           type: string
           format: uuid
           readOnly: true
-        customer_id:
-          allOf:
-          - $ref: '#/components/schemas/Customer'
-          readOnly: true
-        business_id:
-          allOf:
-          - $ref: '#/components/schemas/Business'
-          readOnly: true
-        payment_id:
-          allOf:
-          - $ref: '#/components/schemas/PaymentMode'
-          readOnly: true
-        cashier_id:
-          allOf:
-          - $ref: '#/components/schemas/Employee'
-          readOnly: true
+        customer_uuid:
+          type: string
+          format: uuid
+        business_uuid:
+          type: string
+          format: uuid
+        payment_uuid:
+          type: string
+          format: uuid
+        employee_uuid:
+          type: string
+          format: uuid
         products:
           type: array
           items:
@@ -3379,10 +4232,276 @@ components:
       type: object
       description: Serializer for Stock model
       properties:
-        product_id:
-          allOf:
-          - $ref: '#/components/schemas/Product'
+        uuid:
+          type: string
+          format: uuid
           readOnly: true
+        product_uuid:
+          type: string
+          format: uuid
+        stock_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        cost_per_unit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        price_per_unit_retail:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        price_per_unit_wholesale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        reorder_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        latest_stock_movement_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/StocKInOutEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        latest_stock_movement_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        latest_stock_movement_remarks:
+          type: string
+          nullable: true
+    PatchedStockMovement:
+      type: object
+      description: Serializer for StockMovement Request data
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        stock_uuid:
+          type: string
+          format: uuid
+        movement_type:
+          $ref: '#/components/schemas/StocKInOutEnum'
+        movement_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        previous_stock_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: The stock quantity before the stock movement
+        employee_uuid:
+          type: string
+          format: uuid
+    PatchedSupplier:
+      type: object
+      description: Serializer for Request Supplier model
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        address:
+          type: string
+          maxLength: 255
+        email_address:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedSupplierProduct:
+      type: object
+      description: Serializer for Request data for the SupplierProduct Object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        supplier_uuid:
+          type: string
+          format: uuid
+        product_uuid:
+          type: string
+          format: uuid
+        lead_time:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+    PatchedUser:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+        first_name:
+          type: string
+          title: Firts Name of User
+          maxLength: 255
+        last_name:
+          type: string
+          title: Last Name of User
+          maxLength: 255
+    PaymentMethodEnum:
+      enum:
+      - '01'
+      - '02'
+      - '03'
+      - '04'
+      - '05'
+      - '06'
+      - '07'
+      type: string
+      description: |-
+        * `01` - CASH
+        * `02` - CREDIT
+        * `03` - CASH/CREDIT
+        * `04` - BANK CHECK
+        * `05` - DEBIT AND CREDIT CARD
+        * `06` - MOBILE MONEY
+        * `07` - OTHER
+    PaymentMode:
+      type: object
+      description: Serializer for PaymentMode model Request
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodEnum'
+        properties:
+          type: object
+          additionalProperties: {}
+      required:
+      - uuid
+    PaymentModeResponse:
+      type: object
+      description: Payment Mode Response serializer
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        payment_method:
+          type: string
+          readOnly: true
+      required:
+      - payment_method
+      - uuid
+    Product:
+      type: object
+      description: Serializer for Product model Request data
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        category:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        suppliers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierRelatedResponse'
+          readOnly: true
+        code:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        product_type:
+          type: string
+        tax_type:
+          type: string
+        unit:
+          type: string
+        limited:
+          type: boolean
+          nullable: true
+        active_for_sale:
+          type: boolean
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        packaging_unit:
+          type: string
+      required:
+      - category
+      - code
+      - created_at
+      - name
+      - suppliers
+      - updated_at
+      - uuid
+    ProductListStock:
+      type: object
+      description: |-
+        Serializer to be used to list Stock associated with
+        a product
+      properties:
         uuid:
           type: string
           format: uuid
@@ -3421,129 +4540,86 @@ components:
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
           nullable: true
-        stock_movement_type:
+        latest_stock_movement_type:
           nullable: true
           oneOf:
-          - $ref: '#/components/schemas/StockMovementTypeEnum'
+          - $ref: '#/components/schemas/StocKInOutEnum'
           - $ref: '#/components/schemas/NullEnum'
-        stock_movement_quantity:
+        latest_stock_movement_quantity:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
           nullable: true
-        stock_movement_remarks:
+        latest_stock_movement_remarks:
           type: string
           nullable: true
-    PatchedSupplier:
+        product_name:
+          type: string
+          description: Get name of stock product object
+          readOnly: true
+        product_code:
+          type: string
+          description: Get code of stock product object
+          readOnly: true
+      required:
+      - cost_per_unit
+      - created_at
+      - price_per_unit_retail
+      - price_per_unit_wholesale
+      - product_code
+      - product_name
+      - updated_at
+      - uuid
+    ProductListSuppliers:
       type: object
-      description: Serializer for Supplier model
+      description: Custom serializer to include leadtime
       properties:
         uuid:
           type: string
           format: uuid
-          readOnly: true
-        products:
-          type: array
-          items:
-            $ref: '#/components/schemas/Product'
-          readOnly: true
         name:
           type: string
-          maxLength: 255
         address:
           type: string
-          maxLength: 255
         email_address:
           type: string
-          nullable: true
-          maxLength: 255
+          format: email
         phone_number:
           type: string
-          maxLength: 255
-        created_at:
+        lead_time:
           type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-    PatchedSupplierProduct:
-      type: object
-      description: Serializer for SupplierProduct model
-      properties:
-        supplier:
-          type: integer
-        product:
-          type: integer
-    PatchedUser:
-      type: object
-      properties:
-        uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        username:
-          type: string
-          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
-            only.
-          pattern: ^[\w.@+-]+$
-          maxLength: 150
-        first_name:
-          type: string
-          title: Firts Name of User
-          maxLength: 255
-        last_name:
-          type: string
-          title: Last Name of User
-          maxLength: 255
-    PaymentMethodEnum:
-      enum:
-      - '01'
-      - '02'
-      - '03'
-      - '04'
-      - '05'
-      - '06'
-      - '07'
-      type: string
-      description: |-
-        * `01` - CASH
-        * `02` - CREDIT
-        * `03` - CASH/CREDIT
-        * `04` - BANK CHECK
-        * `05` - DEBIT AND CREDIT CARD
-        * `06` - MOBILE MONEY
-        * `07` - OTHER
-    PaymentMode:
-      type: object
-      description: Serializer for PaymentMode model
-      properties:
-        uuid:
-          type: string
-          format: uuid
-          readOnly: true
-        payment_method:
-          $ref: '#/components/schemas/PaymentMethodEnum'
-        properties:
-          type: object
-          additionalProperties: {}
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
       required:
+      - address
+      - email_address
+      - lead_time
+      - name
+      - phone_number
       - uuid
-    Product:
+    ProductNotFound:
       type: object
-      description: Serializer for Product model
       properties:
-        category:
-          allOf:
-          - $ref: '#/components/schemas/Category'
+        detail:
+          type: string
+          default: Unfortunately requested resource not found
+    ProductResponse:
+      type: object
+      description: Product Serializer for Response data
+      properties:
+        uuid:
+          type: string
+          format: uuid
           readOnly: true
+        category:
+          $ref: '#/components/schemas/Category'
         name:
           type: string
           maxLength: 255
-        uuid:
-          type: string
-          format: uuid
+        suppliers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierRelatedResponse'
           readOnly: true
         code:
           type: string
@@ -3552,11 +4628,14 @@ components:
           type: string
           nullable: true
         product_type:
-          $ref: '#/components/schemas/ProductTypeEnum'
+          type: string
+          readOnly: true
         tax_type:
-          $ref: '#/components/schemas/TaxTypeEnum'
+          type: string
+          readOnly: true
         unit:
-          $ref: '#/components/schemas/UnitEnum'
+          type: string
+          readOnly: true
         limited:
           type: boolean
           nullable: true
@@ -3572,7 +4651,8 @@ components:
           format: date-time
           readOnly: true
         packaging_unit:
-          $ref: '#/components/schemas/PackagingUnitEnum'
+          type: string
+          readOnly: true
       required:
       - category
       - code
@@ -3580,13 +4660,76 @@ components:
       - name
       - packaging_unit
       - product_type
+      - suppliers
       - tax_type
       - unit
       - updated_at
       - uuid
+    ProductSaleUpdate:
+      type: object
+      description: Serializer tailor made for updating (partial or whole) of a ProductSale
+      properties:
+        quantity_sold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        is_wholesale:
+          type: boolean
+      required:
+      - is_wholesale
+      - quantity_sold
     ProductSales:
       type: object
-      description: Serializer for ProductSales model
+      description: Serializer for Request ProductSales model
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        product_uuid:
+          type: string
+          format: uuid
+        sale_uuid:
+          type: string
+          format: uuid
+        quantity_sold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        price_per_unit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        is_wholesale:
+          type: boolean
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        tax_rate:
+          type: string
+          maxLength: 5
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - product_uuid
+      - sale_uuid
+      - updated_at
+      - uuid
+    ProductSalesResponse:
+      type: object
+      description: Serializer for Response ProductSales model
       properties:
         uuid:
           type: string
@@ -3594,11 +4737,11 @@ components:
           readOnly: true
         product:
           allOf:
-          - $ref: '#/components/schemas/Product'
+          - $ref: '#/components/schemas/ProductResponse'
           readOnly: true
         sale:
           allOf:
-          - $ref: '#/components/schemas/ProductSalesRelatedSale'
+          - $ref: '#/components/schemas/SalesRelatedResponseSale'
           readOnly: true
         quantity_sold:
           type: string
@@ -3633,17 +4776,45 @@ components:
       - created_at
       - product
       - sale
-      - tax_rate
       - updated_at
       - uuid
-    ProductSalesRelatedSale:
+    ProductSansSupplierResponse:
       type: object
-      description: Serializer for related Sale model within ProductSales
+      description: |-
+        Product Serializer for Response data without supplier data to
+        be embedded in other serializers
       properties:
         uuid:
           type: string
           format: uuid
           readOnly: true
+        category:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        code:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        product_type:
+          type: string
+          readOnly: true
+        tax_type:
+          type: string
+          readOnly: true
+        unit:
+          type: string
+          readOnly: true
+        limited:
+          type: boolean
+          nullable: true
+        active_for_sale:
+          type: boolean
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -3652,43 +4823,55 @@ components:
           type: string
           format: date-time
           readOnly: true
-        sale_status:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/SaleStatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-          - $ref: '#/components/schemas/NullEnum'
+        packaging_unit:
+          type: string
+          readOnly: true
       required:
+      - category
+      - code
       - created_at
+      - name
+      - packaging_unit
+      - product_type
+      - tax_type
+      - unit
       - updated_at
       - uuid
-    ProductTypeEnum:
-      enum:
-      - '1'
-      - '2'
-      - '3'
-      type: string
+    ProductSearch:
+      type: object
+      description: Custom serializer for search request query
+      properties:
+        query:
+          type: string
+      required:
+      - query
+    ProductSerializerAvecNameSole:
+      type: object
       description: |-
-        * `1` - Raw Material
-        * `2` - Finished Product
-        * `3` - Service Without Stock
+        Custom Serializer that just contains a product name only
+        for nesting purposes
+      properties:
+        name:
+          type: string
+          maxLength: 255
+      required:
+      - name
     Purchase:
       type: object
-      description: Serializer for Purchase model
+      description: Serializer for Request Purchase
       properties:
         uuid:
           type: string
           format: uuid
           readOnly: true
-        user_id:
-          type: integer
-          nullable: true
-        supplier_id:
-          type: integer
-          nullable: true
-        product_id:
-          type: integer
-          nullable: true
+        employee_uuid:
+          type: string
+          format: uuid
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -3697,10 +4880,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        product_quantity:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         purchase_amount:
           type: string
           format: decimal
@@ -3710,6 +4889,183 @@ components:
           nullable: true
       required:
       - created_at
+      - employee_uuid
+      - products
+      - updated_at
+      - uuid
+    PurchaseProduct:
+      type: object
+      description: Serializer for Request PurchaseStock ViewSet
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        product_uuid:
+          type: string
+          format: uuid
+        purchase_uuid:
+          type: string
+          format: uuid
+        supplier_uuid:
+          type: string
+          format: uuid
+        product_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        purchase_unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_product_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        discount_applied:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+      required:
+      - created_at
+      - product_uuid
+      - purchase_uuid
+      - supplier_uuid
+      - updated_at
+      - uuid
+    PurchaseProductResponse:
+      type: object
+      description: This is Response Serailizer for PurchaseProduct ViewSet
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/ProductSansSupplierResponse'
+          readOnly: true
+        purchase:
+          allOf:
+          - $ref: '#/components/schemas/PurchaseRelatedResponse'
+          readOnly: true
+        supplier:
+          allOf:
+          - $ref: '#/components/schemas/SupplierRelatedResponse'
+          readOnly: true
+        product_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        purchase_unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_product_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        discount_applied:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+      required:
+      - created_at
+      - product
+      - purchase
+      - supplier
+      - updated_at
+      - uuid
+    PurchaseRelatedResponse:
+      type: object
+      description: Serializer for without products Response for PurchaseProduct Viewset
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        employee:
+          allOf:
+          - $ref: '#/components/schemas/EmployeeRestricted'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        purchase_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+      required:
+      - created_at
+      - employee
+      - updated_at
+      - uuid
+    PurchaseResponse:
+      type: object
+      description: Serializer for Response Purchase
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        employee:
+          allOf:
+          - $ref: '#/components/schemas/EmployeeRestricted'
+          readOnly: true
+        purchase_products:
+          type: array
+          items: {}
+          description: Get all purchase_products to highlight in purchases Response
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        purchase_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        description:
+          type: string
+          nullable: true
+      required:
+      - created_at
+      - employee
+      - purchase_products
       - updated_at
       - uuid
     ReceiptTypeEnum:
@@ -3744,22 +5100,18 @@ components:
           type: string
           format: uuid
           readOnly: true
-        customer_id:
-          allOf:
-          - $ref: '#/components/schemas/Customer'
-          readOnly: true
-        business_id:
-          allOf:
-          - $ref: '#/components/schemas/Business'
-          readOnly: true
-        payment_id:
-          allOf:
-          - $ref: '#/components/schemas/PaymentMode'
-          readOnly: true
-        cashier_id:
-          allOf:
-          - $ref: '#/components/schemas/Employee'
-          readOnly: true
+        customer_uuid:
+          type: string
+          format: uuid
+        business_uuid:
+          type: string
+          format: uuid
+        payment_uuid:
+          type: string
+          format: uuid
+        employee_uuid:
+          type: string
+          format: uuid
         products:
           type: array
           items:
@@ -3795,28 +5147,347 @@ components:
           format: date-time
           readOnly: true
       required:
-      - business_id
-      - cashier_id
+      - business_uuid
       - created_at
-      - customer_id
-      - payment_id
+      - customer_uuid
+      - employee_uuid
+      - payment_uuid
       - products
-      - receipt_label
+      - updated_at
+      - uuid
+    SalesRelatedResponseSale:
+      type: object
+      description: Serializer for related Sale model within ProductSales
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        sale_status:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SaleStatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+      required:
+      - created_at
+      - updated_at
+      - uuid
+    SalesResponse:
+      type: object
+      description: Serializer for Sales model
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        customer:
+          allOf:
+          - $ref: '#/components/schemas/Customer'
+          readOnly: true
+        business:
+          allOf:
+          - $ref: '#/components/schemas/Business'
+          readOnly: true
+        payment:
+          allOf:
+          - $ref: '#/components/schemas/PaymentModeResponse'
+          readOnly: true
+        employee:
+          $ref: '#/components/schemas/EmployeeRestricted'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          readOnly: true
+        sale_amount_with_tax:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        receipt_type:
+          type: string
+          readOnly: true
+        transaction_type:
+          type: string
+          readOnly: true
+        receipt_label:
+          type: string
+          maxLength: 5
+        sale_status:
+          type: string
+          readOnly: true
+        amount_paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        change:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - business
+      - created_at
+      - customer
+      - employee
+      - payment
+      - products
       - receipt_type
+      - sale_status
       - transaction_type
       - updated_at
       - uuid
+    StocKInOutEnum:
+      enum:
+      - '01'
+      - '02'
+      - '03'
+      - '04'
+      - '05'
+      - '06'
+      - '11'
+      - '12'
+      - '13'
+      - '14'
+      - '15'
+      - '16'
+      type: string
+      description: |-
+        * `01` - Incoming-Import
+        * `02` - Incoming-Purchase
+        * `03` - Incoming-Return
+        * `04` - Incoming-Stock Movement
+        * `05` - Incoming-Processing
+        * `06` - Incoming-Adjustment
+        * `11` - Outgoing-Sale
+        * `12` - Outgoing-Return
+        * `13` - Outgoing-Stock Movement
+        * `14` - Outgoing-Processing
+        * `15` - outgoing-Discarding
+        * `16` - outgoing-Adjustment
     Stock:
       type: object
       description: Serializer for Stock model
       properties:
-        product_id:
-          allOf:
-          - $ref: '#/components/schemas/Product'
-          readOnly: true
         uuid:
           type: string
           format: uuid
+          readOnly: true
+        product_uuid:
+          type: string
+          format: uuid
+        stock_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        cost_per_unit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        price_per_unit_retail:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        price_per_unit_wholesale:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+        reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        reorder_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        latest_stock_movement_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/StocKInOutEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        latest_stock_movement_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+        latest_stock_movement_remarks:
+          type: string
+          nullable: true
+      required:
+      - cost_per_unit
+      - created_at
+      - price_per_unit_retail
+      - price_per_unit_wholesale
+      - product_uuid
+      - updated_at
+      - uuid
+    StockMovement:
+      type: object
+      description: Serializer for StockMovement Request data
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        stock_uuid:
+          type: string
+          format: uuid
+        movement_type:
+          $ref: '#/components/schemas/StocKInOutEnum'
+        movement_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        previous_stock_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: The stock quantity before the stock movement
+        employee_uuid:
+          type: string
+          format: uuid
+      required:
+      - created_at
+      - employee_uuid
+      - movement_quantity
+      - movement_type
+      - remarks
+      - stock_uuid
+      - uuid
+    StockMovementAvecProductResponse:
+      type: object
+      description: |-
+        Custom Serializer for StockMovement Response data in generate
+        list_all_stock_movements in Stocks ViewSet
+      properties:
+        product:
+          $ref: '#/components/schemas/ProductSerializerAvecNameSole'
+        stock_movement:
+          $ref: '#/components/schemas/StockMovementSansStockResponse'
+      required:
+      - product
+      - stock_movement
+    StockMovementResponse:
+      type: object
+      description: Serialier for StockMovement Response data
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        stock:
+          allOf:
+          - $ref: '#/components/schemas/StockResponse'
+          readOnly: true
+        movement_type:
+          type: string
+          readOnly: true
+        movement_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        previous_stock_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: The stock quantity before the stock movement
+        employee:
+          $ref: '#/components/schemas/EmployeeRestricted'
+      required:
+      - created_at
+      - employee
+      - movement_quantity
+      - movement_type
+      - remarks
+      - stock
+      - uuid
+    StockMovementSansStockResponse:
+      type: object
+      description: Serialier for StockMovement Response data
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        movement_type:
+          type: string
+          readOnly: true
+        movement_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        remarks:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        previous_stock_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: The stock quantity before the stock movement
+        employee:
+          type: integer
+          nullable: true
+      required:
+      - created_at
+      - movement_quantity
+      - movement_type
+      - remarks
+      - uuid
+    StockResponse:
+      type: object
+      description: Serializer for stock object Response
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/ProductResponse'
           readOnly: true
         stock_quantity:
           type: string
@@ -3852,58 +5523,37 @@ components:
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
           nullable: true
-        stock_movement_type:
-          nullable: true
-          oneOf:
-          - $ref: '#/components/schemas/StockMovementTypeEnum'
-          - $ref: '#/components/schemas/NullEnum'
-        stock_movement_quantity:
+        latest_stock_movement_type:
+          type: string
+          readOnly: true
+        latest_stock_movement_quantity:
           type: string
           format: decimal
           pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
           nullable: true
-        stock_movement_remarks:
+        latest_stock_movement_remarks:
           type: string
           nullable: true
       required:
       - cost_per_unit
       - created_at
+      - latest_stock_movement_type
       - price_per_unit_retail
       - price_per_unit_wholesale
-      - product_id
+      - product
       - updated_at
       - uuid
-    StockMovementTypeEnum:
-      enum:
-      - '01'
-      - '02'
-      - '03'
-      - '04'
-      - '05'
-      - '06'
-      - '11'
-      - '12'
-      - '13'
-      - '14'
-      - '15'
-      - '16'
-      type: string
-      description: |-
-        * `01` - Incoming-Import
-        * `02` - Incoming-Purchase
-        * `03` - Incoming-Return
-        * `04` - Incoming-Stock Movement
-        * `05` - Incoming-Processing
-        * `06` - Incoming-Adjustment
-        * `11` - Outgoing-Sale
-        * `12` - Outgoing-Return
-        * `13` - Outgoing-Stock Movement
-        * `14` - Outgoing-Processing
-        * `15` - outgoing-Discarding
-        * `16` - outgoing-Adjustment
+    StockSearch:
+      type: object
+      description: Custom serializer for search request query
+      properties:
+        query:
+          type: string
+      required:
+      - query
     Supplier:
       type: object
-      description: Serializer for Supplier model
+      description: Serializer for Request Supplier model
       properties:
         uuid:
           type: string
@@ -3943,31 +5593,171 @@ components:
       - products
       - updated_at
       - uuid
+    SupplierListAllProducts:
+      type: object
+      description: Serializer to list all products associated with a supplier
+      properties:
+        category:
+          type: string
+        name:
+          type: string
+        uuid:
+          type: string
+          format: uuid
+        code:
+          type: string
+        description:
+          type: string
+        product_type:
+          type: string
+        tax_type:
+          type: string
+        packaging_unit:
+          type: string
+        unit:
+          type: string
+        limited:
+          type: boolean
+        active_for_sale:
+          type: boolean
+      required:
+      - active_for_sale
+      - category
+      - code
+      - description
+      - limited
+      - name
+      - packaging_unit
+      - product_type
+      - tax_type
+      - unit
+      - uuid
     SupplierProduct:
       type: object
-      description: Serializer for SupplierProduct model
+      description: Serializer for Request data for the SupplierProduct Object
       properties:
-        supplier:
-          type: integer
-        product:
-          type: integer
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        supplier_uuid:
+          type: string
+          format: uuid
+        product_uuid:
+          type: string
+          format: uuid
+        lead_time:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
       required:
+      - lead_time
+      - product_uuid
+      - supplier_uuid
+      - uuid
+    SupplierProductResponse:
+      type: object
+      description: Supplier for Response Object of SupplierProduct Objects
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        supplier:
+          allOf:
+          - $ref: '#/components/schemas/SupplierRelatedResponse'
+          readOnly: true
+        product:
+          allOf:
+          - $ref: '#/components/schemas/ProductSansSupplierResponse'
+          readOnly: true
+        lead_time:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+      required:
+      - lead_time
       - product
       - supplier
-    TaxTypeEnum:
-      enum:
-      - A
-      - B
-      - C
-      - D
-      - E
-      type: string
-      description: |-
-        * `A` - A-Exempt
-        * `B` - B-16%
-        * `C` - C-0%
-        * `D` - D-Non-VAT
-        * `E` - E-8%
+      - uuid
+    SupplierRelatedResponse:
+      type: object
+      description: Serializer for Supplier response embedded in other serializers
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        address:
+          type: string
+          maxLength: 255
+        email_address:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - address
+      - created_at
+      - name
+      - phone_number
+      - updated_at
+      - uuid
+    SupplierResponse:
+      type: object
+      description: Serializer for Response Supplier Object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSansSupplierResponse'
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        address:
+          type: string
+          maxLength: 255
+        email_address:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - address
+      - created_at
+      - name
+      - phone_number
+      - products
+      - updated_at
+      - uuid
     TransactionTypeEnum:
       enum:
       - C
@@ -3980,92 +5770,37 @@ components:
         * `N` - Normal
         * `P` - Proforma
         * `T` - Training
-    UnitEnum:
-      enum:
-      - PR
-      - AV
-      - BA
-      - BE
-      - BG
-      - BL
-      - BLL
-      - BX
-      - CA
-      - CEL
-      - CMT
-      - CR
-      - DR
-      - DZ
-      - GLL
-      - GRM
-      - GRO
-      - KG
-      - KTM
-      - KWT
-      - LTR
-      - LBR
-      - LK
-      - MTR
-      - M2
-      - M3
-      - MGM
-      - MWT
-      - 'NO'
-      - NX
-      - PA
-      - PG
-      - RL
-      - RO
-      - SET
-      - ST
-      - TNE
-      - TU
-      - U
-      - YRD
-      type: string
-      description: |-
-        * `PR` - Pair
-        * `AV` - Cap
-        * `BA` - Barrel
-        * `BE` - bundle
-        * `BG` - bag
-        * `BL` - block
-        * `BLL` - BLL Barrel (petroleum) (158,987 dm3)
-        * `BX` - box
-        * `CA` - Can
-        * `CEL` - Cell
-        * `CMT` - centimetre
-        * `CR` - CARAT
-        * `DR` - Drum
-        * `DZ` - Dozen
-        * `GLL` - Gallon
-        * `GRM` - GRAM
-        * `GRO` - Gross
-        * `KG` - Kilogram
-        * `KTM` - kilometre
-        * `KWT` - kilowatt
-        * `LTR` - Litre
-        * `LBR` - pound
-        * `LK` - link
-        * `MTR` - Metre
-        * `M2` - Square Metre
-        * `M3` - Cubic Metre
-        * `MGM` - milligram
-        * `MWT` - megawatt hour (1000 Kw.h)
-        * `NO` - Number
-        * `NX` - part per thousand
-        * `PA` - packet
-        * `PG` - plate
-        * `RL` - reel
-        * `RO` - roll
-        * `SET` - set
-        * `ST` - sheet
-        * `TNE` - tonne (metric ton)
-        * `TU` - tube
-        * `U` - Pieces/item[Number]
-        * `YRD` - yard
     User:
       type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+        first_name:
+          type: string
+          title: Firts Name of User
+          maxLength: 255
+        last_name:
+          type: string
+          title: Last Name of User
+          maxLength: 255
+      required:
+      - password
+      - username
+      - uuid
+    UserResponse:
+      type: object
+      description: Response Serializer for User data
       properties:
         uuid:
           type: string
