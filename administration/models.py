@@ -9,6 +9,8 @@ import uuid as uuid_lib
 
 
 # Create your models here.
+
+
 class Business(models.Model):
     """
     Models Administration information related to business
@@ -22,10 +24,21 @@ class Business(models.Model):
     tax_pin = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=255, null=True, blank=True)
     email_address = models.CharField(max_length=255, null=True, blank=True)
-    owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
+
+
+class Owner(models.Model):
+    """
+    Models Business Owner information
+    """
+
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    business = models.ForeignKey(
+        Business, on_delete=models.CASCADE, related_name="owners", null=True, blank=True
+    )
 
 
 class Employee(models.Model):
@@ -50,7 +63,9 @@ class Supplier(models.Model):
 
     uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
     products = models.ManyToManyField(
-        "products.Product", related_name="suppliers", through="products.SupplierProduct"
+        "products.Product",
+        related_name="suppliers",
+        through="products.SupplierProduct",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
