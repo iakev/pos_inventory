@@ -15,7 +15,9 @@ urlpatterns = [
     # Django Admin, use {% url 'admin:index' %},
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
-    path("users/", include("pos_inventory.users.urls", namespace="users")),
+    # path(
+    #     "users/", include("pos_inventory.users.urls", namespace="users")
+    # ),  # move the above users to api/v1/schema
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
@@ -23,19 +25,17 @@ urlpatterns = [
 # API URLS
 urlpatterns += [
     # API base url
-    path("api/", include("config.api_router")),
+    path("api/v1/", include("config.api_router")),
     # DRF auth token
     path("api-auth/", include("rest_framework.urls")),
     path("auth-token/", obtain_auth_token),
+    # api docs
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path(
         "api/docs/",
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
-    path("api/v1/", include("pos_inventory.urls"), name="api-urls"),
-    # path("api/v1/", include("products.urls"), name="api-products"),
-    # path("api/v1/", include("sales.urls"), name="api-sales"),
 ]
 
 if settings.DEBUG:
