@@ -2,6 +2,7 @@
 Module that describes models (DATABASE tables) related to products, suppliers
 and Categories. Forming a basis of inventory control through business logic
 """
+from collections.abc import Iterable
 from decimal import Decimal
 from io import BytesIO
 from os import name
@@ -14,7 +15,7 @@ from django.core.files import File
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
-from administration.models import Supplier
+from administration.models import Supplier, Employee
 
 
 # Create your models here.
@@ -132,18 +133,12 @@ class Product(models.Model):
         Skeletoncase = "SK", _("Skeletoncase")
         Tank_cylindrical = "TY", _("Tank, cylindrical")
         Bulk_gas_at_1031_mbar_15_oC = "VG", _("Bulk, gas(at 1031 mbar 15 oC)")
-        Bulk_liquid_at_normal_temperature_pressure = "VL", _(
-            "Bulk, liquid(at normal temperature/pressure)"
-        )
-        Bulk_solid_large_particles_nodules = "VO", _(
-            "Bulk, solid, large particles(nodules)"
-        )
+        Bulk_liquid_at_normal_temperature_pressure = "VL", _("Bulk, liquid(at normal temperature/pressure)")
+        Bulk_solid_large_particles_nodules = "VO", _("Bulk, solid, large particles(nodules)")
         Bulk_gas_liquefied_at_abnormal_temperature_pressure = "VQ", _(
             "Bulk, gas(liquefied at abnormal temperature/pressure)"
         )
-        Bulk_solid_granular_particles_grains = "VR", _(
-            "Bulk, solid, granular particles(grains)"
-        )
+        Bulk_solid_granular_particles_grains = "VR", _("Bulk, solid, granular particles(grains)")
         Extra_bulk_item = "VT", _("Extra Bulk Item")
         Bulk_fine_particles_powder = "VY", _('Bulk, fine particles("powder")')
         Mills = "ML", _("Mills cigarette")
@@ -212,9 +207,7 @@ class Product(models.Model):
         Finished_Product = "2", _("Finished Product")
         Service = "3", _("Service Without Stock")
 
-    category = models.ForeignKey(
-        Category, related_name="products", on_delete=models.CASCADE
-    )
+    category = models.ForeignKey(Category, related_name="products", on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -227,6 +220,16 @@ class Product(models.Model):
     unit = models.CharField(max_length=5, choices=UnitOfQuantity.choices)
     limited = models.BooleanField(null=True)
     active_for_sale = models.BooleanField(null=True)
+
+    def delete(self, *args, **kwargs):
+        # Soft deletion logic
+        self.active_for_sale = False  # Mark the product as inactive instead of physically deleting
+        self.save()
+
+    def undelete(self):
+        # In case you need to reactivate a product
+        self.active_for_sale = True  # Mark the product as active again
+        self.save()
 
     class Meta:
         verbose_name_plural = "products"
@@ -259,8 +262,10 @@ class SupplierProduct(models.Model):
     Through table for the many to many relationship of supplier and products
     """
 
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    lead_time = models.DecimalField(max_digits=5, decimal_places=2)
 
 
 class Stock(models.Model):
@@ -287,12 +292,8 @@ class Stock(models.Model):
         Adjustment_out = "16", _("outgoing-Adjustment")
 
     uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
-    product_id = models.OneToOneField(
-        Product, primary_key=True, on_delete=models.CASCADE
-    )
-    stock_quantity = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, default=0.00
-    )
+    product = models.OneToOneField(Product, primary_key=True, on_delete=models.CASCADE)
+    stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     cost_per_unit = models.DecimalField(max_digits=6, decimal_places=2)
@@ -300,21 +301,15 @@ class Stock(models.Model):
     price_per_unit_wholesale = models.DecimalField(max_digits=6, decimal_places=2)
     reorder_level = models.DecimalField(null=True, max_digits=6, decimal_places=2)
     reorder_quantity = models.DecimalField(null=True, max_digits=6, decimal_places=2)
-    stock_movement_type = models.CharField(
-        null=True, max_length=4, choices=StockInOutType.choices
-    )
-    stock_movement_quantity = models.DecimalField(
-        null=True, max_digits=6, decimal_places=2, default=0.0
-    )
-    stock_movement_remarks = models.TextField(null=True, blank=True)
+    latest_stock_movement_type = models.CharField(null=True, max_length=4, choices=StockInOutType.choices)
+    latest_stock_movement_quantity = models.DecimalField(null=True, max_digits=6, decimal_places=2, default=0.0)
+    latest_stock_movement_remarks = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "stocks"
         ordering = ["product_id"]
 
-    def switch_stock_case(
-        self, stock_movement_type, stock_movement_quantity, stock_movement_remarks
-    ):
+    def switch_stock_case(self, stock_movement_type, stock_movement_quantity, stock_movement_remarks):
         """
         Encapsulating the stock-movement type and its respective quantity.
         """
@@ -327,9 +322,9 @@ class Stock(models.Model):
             self.StockInOutType.Adjustment_in,
         ]:
             stock_movement_quantity = Decimal(stock_movement_quantity)
-            self.stock_movement_quantity = stock_movement_quantity
+            self.latest_stock_movement_quantity = stock_movement_quantity
             self.stock_quantity += stock_movement_quantity
-            self.stock_movement_remarks = stock_movement_remarks
+            self.latest_stock_movement_remarks = stock_movement_remarks
         elif stock_movement_type in [
             self.StockInOutType.Sale,
             self.StockInOutType.Return_out,
@@ -339,17 +334,55 @@ class Stock(models.Model):
             self.StockInOutType.Adjustment_out,
         ]:
             stock_movement_quantity = Decimal(stock_movement_quantity)
-            self.stock_movement_quantity = stock_movement_quantity
+            self.latest_stock_movement_quantity = stock_movement_quantity
             self.stock_quantity -= stock_movement_quantity
-            self.stock_movement_remarks = stock_movement_remarks
+            self.latest_stock_movement_remarks = stock_movement_remarks
+        else:
+            return
 
     def update_stock_quantity(
-        self, stock_movement_type, stock_movement_quantity, stock_movement_remarks
+        self, stock_movement_type=None, stock_movement_quantity=None, stock_movement_remarks=None
     ):
         """
         Update Stock quantity according to the given stock_movement_type
         """
-        self.switch_stock_case(
-            stock_movement_type, stock_movement_quantity, stock_movement_remarks
-        )
-        self.save()
+        if stock_movement_type:
+            stock_previous_stock_quantity = self.stock_quantity
+            self.switch_stock_case(stock_movement_type, stock_movement_quantity, stock_movement_remarks)
+            self.save()
+            stock_movement = StockMovement.objects.create(
+                stock=self,
+                movement_type=stock_movement_type,
+                movement_quantity=stock_movement_quantity,
+                remarks=stock_movement_remarks,
+                previous_stock_quantity=stock_previous_stock_quantity,
+            )
+            return stock_movement
+
+
+class StockMovement(models.Model):
+    """
+    Class to help skeep track of historical stock_movement types
+    for trend analysis,prediction and planing purposes
+    """
+
+    uuid = models.UUIDField(editable=False, db_index=True, default=uuid_lib.uuid4)
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name="movement")
+    movement_type = models.CharField(max_length=4, choices=Stock.StockInOutType.choices)
+    movement_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    remarks = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    previous_stock_quantity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        default=0.00,
+        help_text="The stock quantity before the stock movement",
+    )
+    employee = models.ForeignKey(
+        Employee, related_name="stockmovement", on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
