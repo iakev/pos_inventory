@@ -2,11 +2,13 @@
 Module illustrating the viewsets for product API's
 """
 from datetime import datetime
+from pos_inventory.utils.decorators import response_schema
 from administration.models import Supplier
+from django.utils.timezone import make_aware
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models import Q
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
 from rest_framework import status
@@ -14,15 +16,43 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from products.models import Product, Category, Stock, SupplierProduct
-from sales.models import Sales
+from products.models import Product, Category, Stock, SupplierProduct, StockMovement
+from sales.models import Sales, ProductSales, PurchaseProduct
+from sales.api.v1.serializers import (
+    CustomerSerializer,
+    EmployeeSerializer,
+    EmployeeRestrictedSerializer,
+    PaymentModeSerializer,
+    SalesResponseSerializer,
+)
+from administration.api.v1.serializers import (
+    EmployeeSerializer,
+)
 from .serializers import (
     ProductSerializer,
+    ProductResponseSerializer,
+    ProductListSuppliersSerializer,
+    ProductSearchSerializer,
+    ProductListStockSerializer,
+    ProductSansSupplierResponseSerializer,
+    ProductNotFoundSerializer,
     CategorySerializer,
+    CategorySearchSerializer,
     StockSerializer,
+    StockResponseSerializer,
+    StockMovementSerializer,
+    StockMovementResponseSerializer,
+    GenerateStockMovementReportSerializer,
+    StockMovementSansStockResponseSerializer,
+    StockSearchSerializer,
+    StockMovementAvecProductSerializer,
+    StockMovementAvecProductResponseSerializer,
     SupplierSerializer,
     SupplierProductSerializer,
-    NotFoundSerializer,
+    SupplierProductResponseSerializer,
+    SupplierResponseSerializer,
+    SupplierListAllProductsSerializer,
+    SupplierRelatedResponseSerializer,
 )
 from .permissions import CategoryAccessPolicy
 
@@ -30,7 +60,7 @@ from .permissions import CategoryAccessPolicy
 class CategoryViewSet(ViewSet):
     """Basic viewset for Category Related Items"""
 
-    permission_classes = (CategoryAccessPolicy,)
+    # permission_classes = (CategoryAccessPolicy,)
     serializer_class = CategorySerializer
     lookup_field = "uuid"
 
@@ -54,7 +84,7 @@ class CategoryViewSet(ViewSet):
             )
         ],
         responses={
-            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
         },
     )
     def retrieve(self, request, uuid=None):
@@ -82,7 +112,7 @@ class CategoryViewSet(ViewSet):
             )
         ],
         responses={
-            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
         },
     )
     def update(self, request, uuid=None):
@@ -105,7 +135,7 @@ class CategoryViewSet(ViewSet):
             )
         ],
         responses={
-            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
         },
     )
     def partial_update(self, request, uuid=None):
@@ -128,7 +158,7 @@ class CategoryViewSet(ViewSet):
             )
         ],
         responses={
-            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
         },
     )
     def destroy(self, request, uuid=None):
@@ -137,16 +167,20 @@ class CategoryViewSet(ViewSet):
         category.delete()
         return Response(status=204)
 
+    @extend_schema(
+        request=CategorySearchSerializer,
+        responses={
+            status.HTTP_200_OK: CategorySerializer(many=True),
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
+        },
+    )
     @action(detail=False, methods=["POST"])
     def search(self, request, *args, **kwargs):
-        query = request.data.get("query", "")
-        if query:
-            categories = Category.objects.filter(
-                Q(name__icontains=query) | Q(uuid__icontains=query)
-            )
-            serializer = CategorySerializer(categories, many=True)
-            return Response(serializer.data)
-        return Response({"categories": []})
+        serializer = CategorySearchSerializer(data=request.data)
+        if serializer.is_valid():
+            categories = serializer.search_category()
+            return Response(categories, status=200)
+        return Response(serializer.errors, status=400)
 
     @extend_schema(
         parameters=[
@@ -159,8 +193,8 @@ class CategoryViewSet(ViewSet):
             )
         ],
         responses={
-            status.HTTP_200_OK: ProductSerializer(many=True),
-            status.HTTP_404_NOT_FOUND: NotFoundSerializer,
+            status.HTTP_200_OK: ProductSansSupplierResponseSerializer(many=True),
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
         },
     )
     @action(detail=True, methods=["GET"])
@@ -168,10 +202,11 @@ class CategoryViewSet(ViewSet):
         """List all products in a category"""
         category = get_object_or_404(self.queryset, uuid=uuid)
         products = category.products.all()
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSansSupplierResponseSerializer(products, many=True)
         return Response(serializer.data)
 
 
+@response_schema(serializer=ProductResponseSerializer)
 class ProductViewSet(ViewSet):
     """Basic viewset for Product Related Items"""
 
@@ -210,12 +245,7 @@ class ProductViewSet(ViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new product"""
-        data = request.data
-        uuid = data.get("category", None)
-        if uuid:
-            category = get_object_or_404(self.category_queryset, uuid=uuid)
-            data["category"] = category.id
-            serializer = ProductSerializer(data=data)
+        serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
@@ -276,9 +306,11 @@ class ProductViewSet(ViewSet):
         """Delete an existing product"""
         product = get_object_or_404(self.product_queryset, uuid=uuid)
         product.delete()
-        return Response(status=204)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data, status=204)
 
     @extend_schema(
+        description="Retrieves a list of suppliers for a particular Product.",
         parameters=[
             OpenApiParameter(
                 name="uuid",
@@ -288,6 +320,10 @@ class ProductViewSet(ViewSet):
                 location=OpenApiParameter.PATH,
             )
         ],
+        responses={
+            status.HTTP_200_OK: ProductListSuppliersSerializer(many=True),
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
+        },
     )
     @action(detail=True, methods=["get"])
     def list_suppliers(self, request, uuid=None):
@@ -302,28 +338,141 @@ class ProductViewSet(ViewSet):
                 "address": product_supplier.supplier.address,
                 "email_address": product_supplier.supplier.email_address,
                 "phone_number": product_supplier.supplier.phone_number,
+                "lead_time": product_supplier.lead_time,
             }
             if supplier not in suppliers:
                 suppliers.append(supplier)
-        return Response(suppliers)
+        serializer = ProductListSuppliersSerializer(data=suppliers, many=True)
+        if serializer.is_valid():
+            return Response(serializer.data, status=200)
+        else:
+            return Response(serializer.errors, status=400)
 
+    @extend_schema(
+        description="Retrieves a list of Products according to query.",
+        request=ProductSearchSerializer,
+        responses={
+            status.HTTP_200_OK: ProductSerializer(many=True),
+        },
+    )
     @action(detail=False, methods=["POST"])
     def search(self, request, *args, **kwargs):
         """
         Searches and enumerates possible products matching query
         """
-        query = request.data.get("query", "")
-        if query:
-            products = Product.objects.filter(
-                Q(name__icontains=query)
-                | Q(description__icontains=query)
-                | Q(code__icontains=query)
+        serializer = ProductSearchSerializer(data=request.data)
+        if serializer.is_valid():
+            search_results = serializer.search_products()
+            return Response(search_results, status=200)
+        return Response(serializer.errors, status=400)
+
+    @extend_schema(
+        description="Retrieves a Stock Information for a particular Product.",
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
             )
-            serializer = ProductSerializer(products, many=True)
-            return Response(serializer.data)
-        return Response({"products": []})
+        ],
+        responses={
+            status.HTTP_200_OK: ProductListStockSerializer(),
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
+        },
+    )
+    @action(detail=True, methods=["GET"])
+    def stock_information(self, request, uuid=None):
+        """Get stock information corresponding to this product"""
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
+        stock = get_object_or_404(Stock, product_id=product.id)
+        serializer = ProductListStockSerializer(stock)
+        return Response(serializer.data, status=200)
+
+    @extend_schema(
+        description="Retrieves Sale Information for a particular Product.",
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+        responses={
+            status.HTTP_200_OK: SalesResponseSerializer(many=True),
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
+        },
+    )
+    @action(detail=True, methods=["GET"])
+    def sale_information(self, request, uuid=None):
+        """Get sale information corresponding to this product"""
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
+        product_sales = ProductSales.objects.filter(product=product).order_by("sale__created_at")
+        sales = []
+        for product_sale in product_sales:
+            sale_data = {
+                "sale_uuid": product_sale.sale.uuid,
+                "customer": CustomerSerializer(product_sale.sale.customer).data,
+                "cashier": EmployeeRestrictedSerializer(product_sale.sale.employee).data,
+                "payment": PaymentModeSerializer(product_sale.sale.payment).data,
+                "sale_status": dict(Sales.TransactionProgress.choices)[product_sale.sale.sale_status],
+                "created_at": product_sale.sale.created_at,
+                "quantity_sold": product_sale.quantity_sold,
+                "price_per_unit": product_sale.price_per_unit,
+                "price": product_sale.price,
+            }
+            if sale_data not in sales:
+                sales.append(sale_data)
+        return Response(
+            sales,
+            status=200,
+        )
+
+    @extend_schema(
+        description="Retrieves Purchase Information for a particular Product.",
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Product.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+        responses={
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
+        },
+    )
+    @action(detail=True, methods=["GET"])
+    def purchase_information(self, request, uuid=None):
+        """
+        Get purchase information corresponding to this product
+        """
+        product = get_object_or_404(self.product_queryset, uuid=uuid)
+        product_purchases = PurchaseProduct.objects.filter(product=product).order_by("purchase__created_at")
+        purchases = []
+        seen_product_purchase_uuids = set()
+        for product_purchase in product_purchases:
+            if product_purchase.uuid in seen_product_purchase_uuids:
+                continue
+            purchase_data = {
+                "purchase_uuid": product_purchase.purchase.uuid,
+                "supplier": product_purchase.supplier.name,
+                "employee": EmployeeRestrictedSerializer(product_purchase.purchase.employee).data,
+                "quantity": product_purchase.product_quantity,
+                "unit_price": product_purchase.purchase_unit_price,
+                "total_cost": product_purchase.total_product_cost,
+                "discount_applied": product_purchase.discount_applied,
+                "date_of_purchase": product_purchase.created_at,
+            }
+            purchases.append(purchase_data)
+        return Response(purchases, status=200)
 
 
+@response_schema(serializer=StockResponseSerializer)
 class StockViewSet(ViewSet):
     """ViewSet for Stock  Items"""
 
@@ -362,12 +511,7 @@ class StockViewSet(ViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new stock"""
-        data = request.data
-        uuid = data.get("product_id", None)
-        if uuid:
-            product = get_object_or_404(self.product_queryset, uuid=uuid)
-            data["product_id"] = product.id
-            serializer = StockSerializer(data=data)
+        serializer = StockSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
@@ -431,37 +575,10 @@ class StockViewSet(ViewSet):
         return Response(status=204)
 
     @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="uuid",
-                description="A unique identifier identifying this Stock item.",
-                required=True,
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.PATH,
-            )
-        ],
+        request=GenerateStockMovementReportSerializer,
     )
-    @action(detail=True, methods=["POST"])
-    def stock_movement(self, request, uuid=None):
-        """Method that updates stock according to the typr of movement"""
-        stock = get_object_or_404(self.stock_queryset, uuid=uuid)
-
-        stock_movement_type = request.data.get("stock_movement_type")
-        stock_movement_quantity = request.data.get("stock_movement_quantity")
-        stock_movement_remarks = request.data.get("stock_movement_remarks")
-        print(request.data)
-        if stock_movement_type:
-            stock.update_stock_quantity(
-                stock_movement_type, stock_movement_quantity, stock_movement_remarks
-            )
-            serializer = StockSerializer(stock, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-            return Response(serializer.data)
-        return Response({"error": "No stock movement type given"}, status=400)
-
     @action(detail=False, methods=["POST"])
-    def generate_stock_movement_report(self, request, pk=None):
+    def generate_stock_movement_report(self, request):
         """
         Generate stock movement report for a given date range
         """
@@ -469,8 +586,8 @@ class StockViewSet(ViewSet):
         start_date = data.get("start_date", None)
         end_date = data.get("end_date", None)
         if start_date and end_date:
-            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            start_date = make_aware(datetime.strptime(start_date, "%Y-%m-%d")).date()
+            end_date = make_aware(datetime.strptime(end_date, "%Y-%m-%d")).date()
         else:
             return Response(
                 {"message": "Please provide a start date and end date"},
@@ -478,9 +595,9 @@ class StockViewSet(ViewSet):
             )
 
         # Filter stock items based on the date range
-        stocks = Stock.objects.filter(updated_at__date__range=[start_date, end_date])
+        stock_movements = StockMovement.objects.filter(created_at__date__range=[start_date, end_date])
 
-        if not stocks:
+        if not stock_movements:
             return Response(
                 {"message": "No stock movement found for the given date range"},
                 status=400,
@@ -492,46 +609,198 @@ class StockViewSet(ViewSet):
             "stock_movement": [],
         }
 
-        for stock in stocks:
-            stock_movement = {
-                "stock_id": stock.uuid,
-                "product_name": stock.product_id.name,
-                "stock_quantity": stock.stock_quantity,
-                "stock_updated_at": stock.updated_at,
-                "cost_per_unit": stock.cost_per_unit,
-                "price_per_unit_retail": stock.price_per_unit_retail,
-                "price_per_unit_wholesale": stock.price_per_unit_wholesale,
-                "reorder_level": stock.reorder_level,
-                "reorder_quantity": stock.reorder_quantity,
-                "stock_movement_type": stock.stock_movement_type,
-                "stock_movement_quantity": stock.stock_movement_quantity,
-                "stock_movement_remarks": stock.stock_movement_remarks,
-            }
-            report["stock_movement"].append(stock_movement)
+        seen_stock_movement_uuids = set()
 
+        for stock_movement in stock_movements:
+            stock_uuid = stock_movement.stock.uuid
+            stock_movement_uuid = stock_movement.uuid
+            if stock_movement_uuid in seen_stock_movement_uuids:
+                continue
+            stock_movement_serializer = StockMovementSansStockResponseSerializer(stock_movement)
+            response = {
+                **stock_movement_serializer.data,
+                "stock_uuid": stock_uuid,
+                "product_name": stock_movement.stock.product.name,
+                "stock_quantity": stock_movement.stock.stock_quantity,
+                "stock_updated_at": stock_movement.stock.updated_at,
+                "cost_per_unit": stock_movement.stock.cost_per_unit,
+                "price_per_unit_retail": stock_movement.stock.price_per_unit_retail,
+                "price_per_unit_wholesale": stock_movement.stock.price_per_unit_wholesale,
+                "reorder_level": stock_movement.stock.reorder_level,
+                "reorder_quantity": stock_movement.stock.reorder_quantity,
+            }
+            report["stock_movement"].append(response)
+            seen_stock_movement_uuids.add(stock_movement_uuid)
         return Response(
             {"stock_movement_report": report},
             status=200,
         )
 
+    @extend_schema(
+        description="Retrieves a list of Products according to query.",
+        request=StockSearchSerializer,
+        responses={
+            status.HTTP_200_OK: StockResponseSerializer(many=True),
+        },
+    )
     @action(detail=False, methods=["POST"])
     def search(self, request, *args, **kwargs):
         """
-        Returns stock information for product name, description or code  in query
+        Returns stock information using product name, description or code  in query
         """
-        query = request.data.get("query", "")
-        product = Product.objects.filter(
-            Q(name__icontains=query)
-            | Q(description__icontains=query)
-            | Q(code__icontains=query)
-        ).first()
-        if query:
-            stock = Stock.objects.get(pk=product.id)
-            serializer = StockSerializer(stock)
-            return Response(serializer.data)
-        return Response({"stocks": []})
+        serializer = StockSearchSerializer(data=request.data)
+        if serializer.is_valid():
+            search_results = serializer.search_stock()
+            return Response(search_results, status=200)
+        return Response(serializer.errors, status=400)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Stock item.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+        request=StockMovementAvecProductSerializer,
+        responses={status.HTTP_200_OK: StockMovementAvecProductResponseSerializer(many=True)},
+    )
+    @action(detail=True, methods=["POST"])
+    def list_all_stock_movements(self, request, uuid=None):
+        """
+        Returns a list of all stock movements associated with a particular stock
+        """
+        stock = get_object_or_404(self.stock_queryset, uuid=uuid)
+        stock_movements = stock.movement.all()
+        movements = []
+        seen_stock_movements_uuids = set()
+        for stock_movement in stock_movements:
+            stock_movement_uuid = stock_movement.uuid
+            if stock_movement_uuid in seen_stock_movements_uuids:
+                continue
+            stock_movement_serializer = StockMovementSansStockResponseSerializer(stock_movement)
+            response = {
+                **stock_movement_serializer.data,
+                "product": stock_movement.stock.product.name,
+            }
+            movements.append(response)
+            seen_stock_movements_uuids.add(stock_movement_uuid)
+        return Response(movements, status=200)
 
 
+@response_schema(serializer=StockMovementResponseSerializer)
+class StockMovementViewSet(ViewSet):
+    """
+    API endpoint allowing stock_movement data be viewed, created and
+    or edited
+    """
+
+    serializer_class = StockMovementSerializer
+    lookup_field = "uuid"
+
+    @property
+    def stock_movement_queryset(self):
+        return StockMovement.objects.all()
+
+    @property
+    def stock_queryset(self):
+        return Stock.objects.all()
+
+    def list(self, request, uuid=None):
+        """
+        List all StockMovements
+        """
+        serializer = StockMovementSerializer(self.stock_movement_queryset, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this StockMovement",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def retrieve(self, request, uuid=None):
+        """
+        Retun a single StockMovement
+        """
+        stock_movement = get_object_or_404(self.stock_movement_queryset, uuid=uuid)
+        serializer = StockMovementSerializer(stock_movement)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        """Create a new StockMovement"""
+        serializer = StockMovementSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this StockMovement.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def update(self, request, uuid=None):
+        """Update a StockMovement"""
+        stock_movement = get_object_or_404(self.stock_movement_queryset, uuid=uuid)
+        serializer = StockMovementSerializer(stock_movement, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this StockMovement.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def partial_update(self, request, uuid=None):
+        """Update a StockMovement"""
+        stock_movement = get_object_or_404(self.stock_movement_queryset, uuid=uuid)
+        serializer = StockMovementSerializer(stock_movement, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this StockMovement.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+    )
+    def destroy(self, request, uuid=None):
+        """Delete a StockMovement"""
+        stock_movement = get_object_or_404(self.stock_movement_queryset, uuid=uuid)
+        stock_movement.delete()
+        return Response(status=204)
+
+
+@response_schema(serializer=SupplierProductResponseSerializer)
 class SupplierProductViewSet(ViewSet):
     """
     API endpoint that allows suppliers to be viewed or edited.
@@ -542,7 +811,7 @@ class SupplierProductViewSet(ViewSet):
 
     @property
     def supplier_queryset(self):
-        return Sales.objects.all()
+        return Supplier.objects.all()
 
     @property
     def product_queryset(self):
@@ -556,9 +825,7 @@ class SupplierProductViewSet(ViewSet):
         """
         List all supplier products
         """
-        serializer = SupplierProductSerializer(
-            self.supplier_product_queryset, many=True
-        )
+        serializer = SupplierProductSerializer(self.supplier_product_queryset, many=True)
         return Response(serializer.data)
 
     @extend_schema(
@@ -576,8 +843,8 @@ class SupplierProductViewSet(ViewSet):
         """
         Retun a single SupplierProduct
         """
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
-        serializer = SupplierProductSerializer(product_sale)
+        supplier_product = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
+        serializer = SupplierProductSerializer(supplier_product)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
@@ -601,8 +868,8 @@ class SupplierProductViewSet(ViewSet):
     )
     def update(self, request, uuid=None):
         """Update a SupplierProduct"""
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
-        serializer = SupplierProductSerializer(product_sale, data=request.data)
+        supplier_product = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
+        serializer = SupplierProductSerializer(supplier_product, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
@@ -621,10 +888,8 @@ class SupplierProductViewSet(ViewSet):
     )
     def partial_update(self, request, uuid=None):
         """Update a SupplierProduct"""
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
-        serializer = SupplierProductSerializer(
-            product_sale, data=request.data, partial=True
-        )
+        supplier_product = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
+        serializer = SupplierProductSerializer(supplier_product, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
@@ -643,57 +908,12 @@ class SupplierProductViewSet(ViewSet):
     )
     def destroy(self, request, uuid=None):
         """Delete a SupplierProduct"""
-        product_sale = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
-        product_sale.delete()
+        supplier_product = get_object_or_404(self.supplier_product_queryset, uuid=uuid)
+        supplier_product.delete()
         return Response(status=204)
 
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="uuid",
-                description="A unique identifier identifying this Supplier.",
-                required=True,
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.PATH,
-            )
-        ],
-    )
-    @action(detail=False, methods=["GET"])
-    def list_all_supplier_products(self, request, uuid=None):
-        """
-        List all SupplierProducts for a Supplier
-        """
-        supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
-        supplier_products = get_list_or_404(
-            self.supplier_product_queryset, supplier=supplier.id
-        )
-        serializer = SupplierProductSerializer(supplier_products, many=True)
-        return Response(serializer.data)
 
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="uuid",
-                description="A unique identifier identifying this Product.",
-                required=True,
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.PATH,
-            )
-        ],
-    )
-    @action(detail=False, methods=["GET"])
-    def list_all_product_supplier(self, request, uuid=None):
-        """
-        List all Suppliers associated with a Product
-        """
-        product = get_object_or_404(self.product_queryset, uuid=uuid)
-        product_supplier = get_list_or_404(
-            self.supplier_product_queryset, product=product.id
-        )
-        serializer = SupplierProductSerializer(product_supplier, many=True)
-        return Response(serializer.data)
-
-
+@response_schema(serializer=SupplierResponseSerializer)
 class SupplierViewSet(ViewSet):
     """API endpoit that allows Suppliers to be viewed and edited"""
 
@@ -794,3 +1014,48 @@ class SupplierViewSet(ViewSet):
         supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
         supplier.delete()
         return Response(status=204)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="uuid",
+                description="A unique identifier identifying this Supplier.",
+                required=True,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+            )
+        ],
+        responses={
+            status.HTTP_200_OK: SupplierListAllProductsSerializer,
+            status.HTTP_404_NOT_FOUND: ProductNotFoundSerializer,
+        },
+    )
+    @action(detail=True, methods=["GET"])
+    def list_all_products(self, request, uuid=None):
+        """
+        List all Products associated with a Supplier
+        """
+        supplier = get_object_or_404(self.supplier_queryset, uuid=uuid)
+        supplier_products = supplier.supplierproduct_set.all()
+        products = []
+        for supplier_product in supplier_products:
+            product = {
+                "category": supplier_product.product.category.name,
+                "name": supplier_product.product.name,
+                "uuid": supplier_product.product.uuid,
+                "code": supplier_product.product.code,
+                "description": supplier_product.product.description,
+                "product_type": str(dict(Product.ProductType.choices)[supplier_product.product.product_type]),
+                "tax_type": str(dict(Product.TaxType.choices)[supplier_product.product.tax_type]),
+                "packaging_unit": str(dict(Product.PackagingUnit.choices)[supplier_product.product.packaging_unit]),
+                "unit": str(dict(Product.UnitOfQuantity.choices)[supplier_product.product.unit]),
+                "limited": supplier_product.product.limited,
+                "active_for_sale": supplier_product.product.active_for_sale,
+            }
+            if product not in products:
+                products.append(product)
+        serializer = SupplierListAllProductsSerializer(data=products, many=True)
+        if serializer.is_valid():
+            return Response(serializer.data, status=200)
+        else:
+            return Response(serializer.errors, status=400)
