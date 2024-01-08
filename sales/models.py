@@ -120,6 +120,7 @@ class Sales(models.Model):
     employee = models.ForeignKey(Employee, related_name="sales", on_delete=models.SET_NULL, null=True, blank=True)
     products = models.ManyToManyField(Product, related_name="sales", through="ProductSales")
     sale_amount_with_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    sub_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     tax_amount = models.DecimalField(max_digits=10, blank=True, default=0.00, decimal_places=2)
     receipt_type = models.CharField(max_length=2, choices=SalesReceiptType.choices, default="S")
     transaction_type = models.CharField(max_length=2, choices=TransactionType.choices, default="N")
@@ -133,6 +134,7 @@ class Sales(models.Model):
     receipt_label = models.CharField(max_length=5, default="NS")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     # Having the amount_paid by default as 0.00 but
     # for completed_sale we update with amount paid for record keeping purposes
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -232,6 +234,7 @@ class ProductSales(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tax_rate = models.CharField(max_length=5, default="B")
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
