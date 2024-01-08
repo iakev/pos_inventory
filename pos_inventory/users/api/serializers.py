@@ -56,3 +56,13 @@ class UserResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["uuid", "username", "first_name", "last_name"]
+
+
+class UserResponseSerializerAvecNameSole(serializers.ModelSerializer):
+    """
+    Response Serializer for user data with only first_name and last_name
+    """
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name"]
