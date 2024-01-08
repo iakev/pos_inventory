@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from administration.models import Supplier, Employee, Business
+from pos_inventory.users.api.serializers import UserResponseSerializerAvecNameSole
 from administration.api.v1.serializers import (
     BusinessSerializer,
     EmployeeSerializer,
@@ -210,15 +211,37 @@ class SalesSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
+class EmployeeSerializerAvecNameSole(serializers.ModelSerializer):
+    """
+    Serializer for Employee using the first and last names of user only
+    """
+
+    user = UserResponseSerializerAvecNameSole()
+
+    class Meta:
+        model = Employee
+        fields = ["user"]
+
+
+class CustomerSerializerAvecnameSole(serializers.ModelSerializer):
+    """
+    Serializer that just lists names only
+    """
+
+    class Meta:
+        model = Customer
+        fields = ["name"]
+
+
 class SalesResponseSerializer(serializers.ModelSerializer):
     """
     Serializer for Sales model
     """
 
-    business = BusinessSerializer(read_only=True)
-    employee = EmployeeRestrictedSerializer()
+    # business = BusinessSerializer(read_only=True)
+    employee = EmployeeSerializerAvecNameSole()
     payment = PaymentModeResponseSerializer(read_only=True)
-    customer = CustomerSerializer(read_only=True)
+    customer = CustomerSerializerAvecnameSole(read_only=True)
     products = ProductSerializer(many=True, read_only=True)
     receipt_type = serializers.CharField(source="get_receipt_type_display", read_only=True)
     transaction_type = serializers.CharField(source="get_transaction_type_display", read_only=True)
@@ -229,7 +252,6 @@ class SalesResponseSerializer(serializers.ModelSerializer):
         fields = [
             "uuid",
             "customer",
-            "business",
             "payment",
             "employee",
             "products",
@@ -324,7 +346,9 @@ class ProductSalesSerializer(serializers.ModelSerializer):
         """
         Overriding create method for adding business logic
         """
+        # TODO: deal with discount arithmetic
         quantity_sold = validated_data.get("quantity_sold", "0")
+        # discount = validated_data.get("discount", "0")
         stock = get_object_or_404(Stock, product_id=validated_data["product"].id)
         if Decimal(quantity_sold) > Decimal(stock.stock_quantity):
             validated_data["quantity_sold"] = stock.stock_quantity
@@ -332,6 +356,7 @@ class ProductSalesSerializer(serializers.ModelSerializer):
             stock.price_per_unit_wholesale if validated_data["is_wholesale"] else stock.price_per_unit_retail
         )
         validated_data["price"] = Decimal(quantity_sold) * Decimal(validated_data["price_per_unit"])
+        # validated_data["price"] = Decimal(validated_data["price"]) - Decimal(discount)
         validated_data["tax_rate"] = validated_data["product"].tax_type
         total_amount = validated_data["product"].get_total_amount(
             Decimal(validated_data["price"]), validated_data["tax_rate"]
@@ -359,7 +384,7 @@ class ProductSalesResponseSerializer(serializers.ModelSerializer):
     Serializer for Response ProductSales model
     """
 
-    product = ProductResponseSerializer(read_only=True)
+    product = ProductSansSupplierResponseSerializer(read_only=True)
     sale = SalesRelatedResponseSaleSerializer(read_only=True)
 
     class Meta:
