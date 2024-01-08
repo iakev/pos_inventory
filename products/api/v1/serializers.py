@@ -27,6 +27,7 @@ class CategoryResponseSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
+        model = Category
         fields = ["name", "thumbnail"]
 
 
@@ -153,7 +154,7 @@ class ProductSerializer(serializers.ModelSerializer):
         """
         Delegating response data to appropriate ProductResponseSerializer
         """
-        return ProductResponseSerializer(context=self.context).to_representation(instance)
+        return ProductSansSupplierResponseSerializer(context=self.context).to_representation(instance)
 
     def to_internal_value(self, data):
         """
@@ -231,7 +232,7 @@ class ProductSansSupplierResponseSerializer(serializers.ModelSerializer):
     be embedded in other serializers
     """
 
-    category = serializers.UUIDField()
+    category = CategoryResponseSerializer()
     packaging_unit = serializers.CharField(source="get_packaging_unit_display", read_only=True)
     unit = serializers.CharField(source="get_unit_display", read_only=True)
     product_type = serializers.CharField(source="get_product_type_display", read_only=True)
@@ -330,13 +331,10 @@ class SupplierResponseSerializer(serializers.ModelSerializer):
     Serializer for Response Supplier Object
     """
 
-    products = ProductSansSupplierResponseSerializer(many=True, read_only=True)
-
     class Meta:
         model = Supplier
         fields = [
             "uuid",
-            "products",
             "name",
             "address",
             "email_address",
