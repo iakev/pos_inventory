@@ -6,7 +6,7 @@ info:
 paths:
   /api/schema/:
     get:
-      operationId: api_schema_retrieve
+      operationId: schema_retrieve
       description: |-
         OpenApi3 schema for this API. Format can be selected via content negotiation.
 
@@ -124,10 +124,9 @@ paths:
           - zh-hans
           - zh-hant
       tags:
-      - api
+      - schema
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -148,15 +147,68 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/token/:
+    post:
+      operationId: token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
   /api/v1/business/:
     get:
-      operationId: api_v1_business_list
+      operationId: v1_business_list
       description: Returns a list of business
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -167,10 +219,10 @@ paths:
                   $ref: '#/components/schemas/Business'
           description: ''
     post:
-      operationId: api_v1_business_create
+      operationId: v1_business_create
       description: Creates a  new business
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -184,8 +236,7 @@ paths:
               $ref: '#/components/schemas/Business'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -195,7 +246,7 @@ paths:
           description: ''
   /api/v1/business/{uuid}/:
     get:
-      operationId: api_v1_business_retrieve
+      operationId: v1_business_retrieve
       description: Retrieves a business given its associated identifier
       parameters:
       - in: path
@@ -206,10 +257,9 @@ paths:
         description: A unique identifier identifying this business.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -218,7 +268,7 @@ paths:
                 $ref: '#/components/schemas/AdministrationNotFound'
           description: ''
     put:
-      operationId: api_v1_business_update
+      operationId: v1_business_update
       description: Updates a business given its associated identifier
       parameters:
       - in: path
@@ -229,7 +279,7 @@ paths:
         description: A unique identifier identifying this business.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -243,8 +293,7 @@ paths:
               $ref: '#/components/schemas/Business'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -253,7 +302,7 @@ paths:
                 $ref: '#/components/schemas/AdministrationNotFound'
           description: ''
     patch:
-      operationId: api_v1_business_partial_update
+      operationId: v1_business_partial_update
       description: updates a business partially given it's identifier
       parameters:
       - in: path
@@ -264,7 +313,7 @@ paths:
         description: A unique identifier identifying this business.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -277,8 +326,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedBusiness'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -287,7 +335,7 @@ paths:
                 $ref: '#/components/schemas/AdministrationNotFound'
           description: ''
     delete:
-      operationId: api_v1_business_destroy
+      operationId: v1_business_destroy
       description: deletes an existing business
       parameters:
       - in: path
@@ -298,10 +346,9 @@ paths:
         description: A unique identifier identifying this business.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -311,7 +358,7 @@ paths:
           description: ''
   /api/v1/business/{uuid}/list_all_owners/:
     get:
-      operationId: api_v1_business_list_all_owners_retrieve
+      operationId: v1_business_list_all_owners_retrieve
       description: Lists all owners of the business
       parameters:
       - in: path
@@ -321,10 +368,9 @@ paths:
           format: uuid
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -334,13 +380,12 @@ paths:
           description: ''
   /api/v1/categories/:
     get:
-      operationId: api_v1_categories_list
+      operationId: v1_categories_list
       description: Return a list of all categories
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -351,10 +396,10 @@ paths:
                   $ref: '#/components/schemas/Category'
           description: ''
     post:
-      operationId: api_v1_categories_create
+      operationId: v1_categories_create
       description: Create a new category
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -368,8 +413,7 @@ paths:
               $ref: '#/components/schemas/Category'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -379,7 +423,7 @@ paths:
           description: ''
   /api/v1/categories/{uuid}/:
     get:
-      operationId: api_v1_categories_retrieve
+      operationId: v1_categories_retrieve
       description: Return a single category
       parameters:
       - in: path
@@ -390,10 +434,9 @@ paths:
         description: A unique identifier identifying this Category.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -402,7 +445,7 @@ paths:
                 $ref: '#/components/schemas/ProductNotFound'
           description: ''
     put:
-      operationId: api_v1_categories_update
+      operationId: v1_categories_update
       description: Update an existing category
       parameters:
       - in: path
@@ -413,7 +456,7 @@ paths:
         description: A unique identifier identifying this Category.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -427,8 +470,7 @@ paths:
               $ref: '#/components/schemas/Category'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -437,7 +479,7 @@ paths:
                 $ref: '#/components/schemas/ProductNotFound'
           description: ''
     patch:
-      operationId: api_v1_categories_partial_update
+      operationId: v1_categories_partial_update
       description: Update an existing category
       parameters:
       - in: path
@@ -448,7 +490,7 @@ paths:
         description: A unique identifier identifying this Category.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -461,8 +503,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCategory'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -471,7 +512,7 @@ paths:
                 $ref: '#/components/schemas/ProductNotFound'
           description: ''
     delete:
-      operationId: api_v1_categories_destroy
+      operationId: v1_categories_destroy
       description: Delete an existing category
       parameters:
       - in: path
@@ -482,10 +523,9 @@ paths:
         description: A unique identifier identifying this Category.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -495,7 +535,7 @@ paths:
           description: ''
   /api/v1/categories/{uuid}/list_all_products/:
     get:
-      operationId: api_v1_categories_list_all_products_list
+      operationId: v1_categories_list_all_products_list
       description: List all products in a category
       parameters:
       - in: path
@@ -506,10 +546,9 @@ paths:
         description: A unique identifier identifying this Category.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -527,10 +566,10 @@ paths:
           description: ''
   /api/v1/categories/search/:
     post:
-      operationId: api_v1_categories_search_create
+      operationId: v1_categories_search_create
       description: Basic viewset for Category Related Items
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -544,8 +583,7 @@ paths:
               $ref: '#/components/schemas/CategorySearch'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -563,13 +601,12 @@ paths:
           description: ''
   /api/v1/customers/:
     get:
-      operationId: api_v1_customers_list
+      operationId: v1_customers_list
       description: Returns a list of Customer
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -580,10 +617,10 @@ paths:
                   $ref: '#/components/schemas/Customer'
           description: ''
     post:
-      operationId: api_v1_customers_create
+      operationId: v1_customers_create
       description: Creates a  new customer
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -596,8 +633,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Customer'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -607,7 +643,7 @@ paths:
           description: ''
   /api/v1/customers/{uuid}/:
     get:
-      operationId: api_v1_customers_retrieve
+      operationId: v1_customers_retrieve
       description: Retrieves a Customer given its associated identifier
       parameters:
       - in: path
@@ -618,10 +654,9 @@ paths:
         description: A unique identifier identifying this Customer.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -630,7 +665,7 @@ paths:
                 $ref: '#/components/schemas/Customer'
           description: ''
     put:
-      operationId: api_v1_customers_update
+      operationId: v1_customers_update
       description: Updates a Customer given its associated identifier
       parameters:
       - in: path
@@ -641,7 +676,7 @@ paths:
         description: A unique identifier identifying this Customer.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -654,8 +689,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Customer'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -664,7 +698,7 @@ paths:
                 $ref: '#/components/schemas/Customer'
           description: ''
     patch:
-      operationId: api_v1_customers_partial_update
+      operationId: v1_customers_partial_update
       description: updates a customer partially given it's identifier
       parameters:
       - in: path
@@ -675,7 +709,7 @@ paths:
         description: A unique identifier identifying this Customer.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -688,8 +722,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCustomer'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -698,7 +731,7 @@ paths:
                 $ref: '#/components/schemas/Customer'
           description: ''
     delete:
-      operationId: api_v1_customers_destroy
+      operationId: v1_customers_destroy
       description: deletes an existing Customer
       parameters:
       - in: path
@@ -709,22 +742,20 @@ paths:
         description: A unique identifier identifying this Customer.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/employees/:
     get:
-      operationId: api_v1_employees_list
+      operationId: v1_employees_list
       description: Returns a list of employee
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -735,10 +766,10 @@ paths:
                   $ref: '#/components/schemas/Employee'
           description: ''
     post:
-      operationId: api_v1_employees_create
+      operationId: v1_employees_create
       description: Creates a  new employee
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -752,8 +783,7 @@ paths:
               $ref: '#/components/schemas/Employee'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -763,7 +793,7 @@ paths:
           description: ''
   /api/v1/employees/{uuid}/:
     get:
-      operationId: api_v1_employees_retrieve
+      operationId: v1_employees_retrieve
       description: Retrieves a employee given its associated identifier
       parameters:
       - in: path
@@ -774,10 +804,9 @@ paths:
         description: A unique identifier identifying this employee.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -786,7 +815,7 @@ paths:
                 $ref: '#/components/schemas/Employee'
           description: ''
     put:
-      operationId: api_v1_employees_update
+      operationId: v1_employees_update
       description: Updates a Employee given its associated identifier
       parameters:
       - in: path
@@ -797,7 +826,7 @@ paths:
         description: A unique identifier identifying this employee.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -811,8 +840,7 @@ paths:
               $ref: '#/components/schemas/Employee'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -821,7 +849,7 @@ paths:
                 $ref: '#/components/schemas/Employee'
           description: ''
     patch:
-      operationId: api_v1_employees_partial_update
+      operationId: v1_employees_partial_update
       description: updates a employee partially given it's identifier
       parameters:
       - in: path
@@ -832,7 +860,7 @@ paths:
         description: A unique identifier identifying this employee.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -845,8 +873,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedEmployee'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -855,7 +882,7 @@ paths:
                 $ref: '#/components/schemas/Employee'
           description: ''
     delete:
-      operationId: api_v1_employees_destroy
+      operationId: v1_employees_destroy
       description: deletes an existing Employee
       parameters:
       - in: path
@@ -866,22 +893,20 @@ paths:
         description: A unique identifier identifying this employee.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/owners/:
     get:
-      operationId: api_v1_owners_list
+      operationId: v1_owners_list
       description: Returns a lists of business owners
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -898,10 +923,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_owners_create
+      operationId: v1_owners_create
       description: Creates a  new owner
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -915,8 +940,7 @@ paths:
               $ref: '#/components/schemas/Owner'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -932,7 +956,7 @@ paths:
           description: ''
   /api/v1/owners/{uuid}/:
     get:
-      operationId: api_v1_owners_retrieve
+      operationId: v1_owners_retrieve
       description: Retrieves a owner given its associated identifier
       parameters:
       - in: path
@@ -943,10 +967,9 @@ paths:
         description: A unique identifier identifying this owner.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -961,7 +984,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_owners_update
+      operationId: v1_owners_update
       description: Updates a owner given its associated identifier
       parameters:
       - in: path
@@ -972,7 +995,7 @@ paths:
         description: A unique identifier identifying this owner.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -986,8 +1009,7 @@ paths:
               $ref: '#/components/schemas/Owner'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1002,7 +1024,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_owners_partial_update
+      operationId: v1_owners_partial_update
       description: updates a owner partially given it's identifier
       parameters:
       - in: path
@@ -1013,7 +1035,7 @@ paths:
         description: A unique identifier identifying this owner.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1026,8 +1048,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedOwner'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1042,7 +1063,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_owners_destroy
+      operationId: v1_owners_destroy
       description: deletes an existing owner
       parameters:
       - in: path
@@ -1053,10 +1074,9 @@ paths:
         description: A unique identifier identifying this owner.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -1066,13 +1086,12 @@ paths:
           description: ''
   /api/v1/paymentmodes/:
     get:
-      operationId: api_v1_paymentmodes_list
+      operationId: v1_paymentmodes_list
       description: Returns a list of all PaymentModes
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1089,10 +1108,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_paymentmodes_create
+      operationId: v1_paymentmodes_create
       description: Creates a  new PaymentMode
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1105,8 +1124,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PaymentMode'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -1122,7 +1140,7 @@ paths:
           description: ''
   /api/v1/paymentmodes/{uuid}/:
     get:
-      operationId: api_v1_paymentmodes_retrieve
+      operationId: v1_paymentmodes_retrieve
       description: Retrieves a PaymentMode given its associated identifier
       parameters:
       - in: path
@@ -1133,10 +1151,9 @@ paths:
         description: A unique identifier identifying this Payment Mode.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1151,7 +1168,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_paymentmodes_update
+      operationId: v1_paymentmodes_update
       description: Updates a PaymentMode given its associated identifier
       parameters:
       - in: path
@@ -1162,7 +1179,7 @@ paths:
         description: A unique identifier identifying this Payment Mode.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1175,8 +1192,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PaymentMode'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1191,7 +1207,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_paymentmodes_partial_update
+      operationId: v1_paymentmodes_partial_update
       description: updates a PaymentMode partially given it's identifier
       parameters:
       - in: path
@@ -1202,7 +1218,7 @@ paths:
         description: A unique identifier identifying this Payment Mode.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1215,8 +1231,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPaymentMode'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1231,7 +1246,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_paymentmodes_destroy
+      operationId: v1_paymentmodes_destroy
       description: deletes an existing PaymentMode
       parameters:
       - in: path
@@ -1242,22 +1257,20 @@ paths:
         description: A unique identifier identifying this Payment Mode.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/products/:
     get:
-      operationId: api_v1_products_list
+      operationId: v1_products_list
       description: Return a list of all products
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1265,7 +1278,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProductResponse'
+                  $ref: '#/components/schemas/ProductSansSupplierResponse'
           description: ''
         '404':
           content:
@@ -1274,10 +1287,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_products_create
+      operationId: v1_products_create
       description: Create a new product
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1291,14 +1304,13 @@ paths:
               $ref: '#/components/schemas/Product'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductResponse'
+                $ref: '#/components/schemas/ProductSansSupplierResponse'
           description: ''
         '404':
           content:
@@ -1308,7 +1320,7 @@ paths:
           description: ''
   /api/v1/products/{uuid}/:
     get:
-      operationId: api_v1_products_retrieve
+      operationId: v1_products_retrieve
       description: Return a single product
       parameters:
       - in: path
@@ -1319,16 +1331,15 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductResponse'
+                $ref: '#/components/schemas/ProductSansSupplierResponse'
           description: ''
         '404':
           content:
@@ -1337,7 +1348,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_products_update
+      operationId: v1_products_update
       description: Update an existing product
       parameters:
       - in: path
@@ -1348,7 +1359,7 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1362,14 +1373,13 @@ paths:
               $ref: '#/components/schemas/Product'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductResponse'
+                $ref: '#/components/schemas/ProductSansSupplierResponse'
           description: ''
         '404':
           content:
@@ -1378,7 +1388,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_products_partial_update
+      operationId: v1_products_partial_update
       description: Update an existing product
       parameters:
       - in: path
@@ -1389,7 +1399,7 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1402,14 +1412,13 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProduct'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductResponse'
+                $ref: '#/components/schemas/ProductSansSupplierResponse'
           description: ''
         '404':
           content:
@@ -1418,7 +1427,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_products_destroy
+      operationId: v1_products_destroy
       description: Delete an existing product
       parameters:
       - in: path
@@ -1429,16 +1438,15 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/products/{uuid}/list_suppliers/:
     get:
-      operationId: api_v1_products_list_suppliers_list
+      operationId: v1_products_list_suppliers_list
       description: Retrieves a list of suppliers for a particular Product.
       parameters:
       - in: path
@@ -1449,10 +1457,9 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1470,7 +1477,7 @@ paths:
           description: ''
   /api/v1/products/{uuid}/purchase_information/:
     get:
-      operationId: api_v1_products_purchase_information_retrieve
+      operationId: v1_products_purchase_information_retrieve
       description: Retrieves Purchase Information for a particular Product.
       parameters:
       - in: path
@@ -1481,10 +1488,9 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '404':
           content:
@@ -1494,7 +1500,7 @@ paths:
           description: ''
   /api/v1/products/{uuid}/sale_information/:
     get:
-      operationId: api_v1_products_sale_information_list
+      operationId: v1_products_sale_information_list
       description: Retrieves Sale Information for a particular Product.
       parameters:
       - in: path
@@ -1505,10 +1511,9 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1526,7 +1531,7 @@ paths:
           description: ''
   /api/v1/products/{uuid}/stock_information/:
     get:
-      operationId: api_v1_products_stock_information_retrieve
+      operationId: v1_products_stock_information_retrieve
       description: Retrieves a Stock Information for a particular Product.
       parameters:
       - in: path
@@ -1537,10 +1542,9 @@ paths:
         description: A unique identifier identifying this Product.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1556,10 +1560,10 @@ paths:
           description: ''
   /api/v1/products/search/:
     post:
-      operationId: api_v1_products_search_create
+      operationId: v1_products_search_create
       description: Retrieves a list of Products according to query.
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1573,8 +1577,7 @@ paths:
               $ref: '#/components/schemas/ProductSearch'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1586,13 +1589,12 @@ paths:
           description: ''
   /api/v1/productsales/:
     get:
-      operationId: api_v1_productsales_list
+      operationId: v1_productsales_list
       description: List all ProductSales.
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1609,10 +1611,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_productsales_create
+      operationId: v1_productsales_create
       description: Create a new ProductSale
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1626,8 +1628,7 @@ paths:
               $ref: '#/components/schemas/ProductSales'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -1643,7 +1644,7 @@ paths:
           description: ''
   /api/v1/productsales/{uuid}/:
     get:
-      operationId: api_v1_productsales_retrieve
+      operationId: v1_productsales_retrieve
       description: Retun a single ProductSale
       parameters:
       - in: path
@@ -1654,10 +1655,9 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1672,7 +1672,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_productsales_update
+      operationId: v1_productsales_update
       description: Update a ProductSale
       parameters:
       - in: path
@@ -1683,7 +1683,7 @@ paths:
         description: A unique identifier identifying this product_sale.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1697,8 +1697,7 @@ paths:
               $ref: '#/components/schemas/ProductSaleUpdate'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1713,7 +1712,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_productsales_partial_update
+      operationId: v1_productsales_partial_update
       description: Update a ProductSale
       parameters:
       - in: path
@@ -1724,7 +1723,7 @@ paths:
         description: A unique identifier identifying this product_sale.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1737,8 +1736,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProductSaleUpdate'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1753,7 +1751,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_productsales_destroy
+      operationId: v1_productsales_destroy
       description: Delete a ProductSale
       parameters:
       - in: path
@@ -1764,22 +1762,20 @@ paths:
         description: A unique identifier identifying this ProductSale.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/purchaseproducts/:
     get:
-      operationId: api_v1_purchaseproducts_list
+      operationId: v1_purchaseproducts_list
       description: list all PurchaseProducts
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1796,10 +1792,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_purchaseproducts_create
+      operationId: v1_purchaseproducts_create
       description: Create a new PurchaseProduct
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1813,8 +1809,7 @@ paths:
               $ref: '#/components/schemas/PurchaseProduct'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -1830,7 +1825,7 @@ paths:
           description: ''
   /api/v1/purchaseproducts/{uuid}/:
     get:
-      operationId: api_v1_purchaseproducts_retrieve
+      operationId: v1_purchaseproducts_retrieve
       description: Return a single PurchaseProduct
       parameters:
       - in: path
@@ -1841,10 +1836,9 @@ paths:
         description: A unique identifier identifying this PurchaseStock.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1859,7 +1853,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_purchaseproducts_update
+      operationId: v1_purchaseproducts_update
       description: Update a PurchaseProduct
       parameters:
       - in: path
@@ -1870,7 +1864,7 @@ paths:
         description: A unique identifier identifying this PurchaseProduct.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1884,8 +1878,7 @@ paths:
               $ref: '#/components/schemas/PurchaseProduct'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1900,7 +1893,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_purchaseproducts_partial_update
+      operationId: v1_purchaseproducts_partial_update
       description: Update a PurchaseProduct
       parameters:
       - in: path
@@ -1911,7 +1904,7 @@ paths:
         description: A unique identifier identifying this PurchaseProduct.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -1924,8 +1917,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPurchaseProduct'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1940,7 +1932,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_purchaseproducts_destroy
+      operationId: v1_purchaseproducts_destroy
       description: Delete a PurchaseProduct
       parameters:
       - in: path
@@ -1951,22 +1943,20 @@ paths:
         description: A unique identifier identifying this PurchaseProduct.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/purchases/:
     get:
-      operationId: api_v1_purchases_list
+      operationId: v1_purchases_list
       description: list all purchases
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -1983,10 +1973,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_purchases_create
+      operationId: v1_purchases_create
       description: create a new purchase
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2000,8 +1990,7 @@ paths:
               $ref: '#/components/schemas/Purchase'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -2017,7 +2006,7 @@ paths:
           description: ''
   /api/v1/purchases/{uuid}/:
     get:
-      operationId: api_v1_purchases_retrieve
+      operationId: v1_purchases_retrieve
       description: Return a single purchase
       parameters:
       - in: path
@@ -2028,10 +2017,9 @@ paths:
         description: A unique identifier identifying this Purchase.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2046,7 +2034,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_purchases_update
+      operationId: v1_purchases_update
       description: Update a Purchase
       parameters:
       - in: path
@@ -2057,7 +2045,7 @@ paths:
         description: A unique identifier identifying this Purchase.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2071,8 +2059,7 @@ paths:
               $ref: '#/components/schemas/Purchase'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2087,7 +2074,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_purchases_partial_update
+      operationId: v1_purchases_partial_update
       description: Update a Purchase
       parameters:
       - in: path
@@ -2098,7 +2085,7 @@ paths:
         description: A unique identifier identifying this Purchase.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2111,8 +2098,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPurchase'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2127,7 +2113,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_purchases_destroy
+      operationId: v1_purchases_destroy
       description: Delete a Purchase
       parameters:
       - in: path
@@ -2138,22 +2124,20 @@ paths:
         description: A unique identifier identifying this Purchase.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/sales/:
     get:
-      operationId: api_v1_sales_list
+      operationId: v1_sales_list
       description: List all Sales.
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2170,10 +2154,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_sales_create
+      operationId: v1_sales_create
       description: Create a new Sale
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2187,8 +2171,7 @@ paths:
               $ref: '#/components/schemas/Sales'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -2204,7 +2187,7 @@ paths:
           description: ''
   /api/v1/sales/{uuid}/:
     get:
-      operationId: api_v1_sales_retrieve
+      operationId: v1_sales_retrieve
       description: Retrieve a Sale indentified by uuid
       parameters:
       - in: path
@@ -2215,10 +2198,9 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2233,7 +2215,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_sales_update
+      operationId: v1_sales_update
       description: Update a Sale
       parameters:
       - in: path
@@ -2244,7 +2226,7 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2258,8 +2240,7 @@ paths:
               $ref: '#/components/schemas/Sales'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2274,7 +2255,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_sales_partial_update
+      operationId: v1_sales_partial_update
       description: Update a Sale
       parameters:
       - in: path
@@ -2285,7 +2266,7 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2298,8 +2279,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSales'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2314,7 +2294,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_sales_destroy
+      operationId: v1_sales_destroy
       description: Delete a Sale
       parameters:
       - in: path
@@ -2325,16 +2305,15 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/sales/{uuid}/break_down_denomination/:
     post:
-      operationId: api_v1_sales_break_down_denomination_create
+      operationId: v1_sales_break_down_denomination_create
       description: Breakdown denomination when there is no change available
       parameters:
       - in: path
@@ -2345,7 +2324,7 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2359,8 +2338,7 @@ paths:
               $ref: '#/components/schemas/Sales'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2370,7 +2348,7 @@ paths:
           description: ''
   /api/v1/sales/{uuid}/generate_receipt/:
     post:
-      operationId: api_v1_sales_generate_receipt_create
+      operationId: v1_sales_generate_receipt_create
       description: |-
         Complete a Sale by adding the requisite data, setting status and
         and amount_paid and generating a receipt/receipt_data
@@ -2383,7 +2361,7 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2397,8 +2375,7 @@ paths:
               $ref: '#/components/schemas/GenerateSaleReceipt'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2408,7 +2385,7 @@ paths:
           description: ''
   /api/v1/sales/{uuid}/get_products_information/:
     post:
-      operationId: api_v1_sales_get_products_information_create
+      operationId: v1_sales_get_products_information_create
       description: |-
         Get all products and product_sale_info related
         to a speciic sale
@@ -2421,10 +2398,9 @@ paths:
         description: A unique identifier identifying this sale.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2434,10 +2410,10 @@ paths:
           description: ''
   /api/v1/sales/generate_sales_report/:
     post:
-      operationId: api_v1_sales_generate_sales_report_create
+      operationId: v1_sales_generate_sales_report_create
       description: Generate sales report based on date given
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2451,8 +2427,7 @@ paths:
               $ref: '#/components/schemas/GenerateSalesReport'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2462,13 +2437,12 @@ paths:
           description: ''
   /api/v1/stockmovement/:
     get:
-      operationId: api_v1_stockmovement_list
+      operationId: v1_stockmovement_list
       description: List all StockMovements
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2485,10 +2459,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_stockmovement_create
+      operationId: v1_stockmovement_create
       description: Create a new StockMovement
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2502,8 +2476,7 @@ paths:
               $ref: '#/components/schemas/StockMovement'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -2519,7 +2492,7 @@ paths:
           description: ''
   /api/v1/stockmovement/{uuid}/:
     get:
-      operationId: api_v1_stockmovement_retrieve
+      operationId: v1_stockmovement_retrieve
       description: Retun a single StockMovement
       parameters:
       - in: path
@@ -2530,10 +2503,9 @@ paths:
         description: A unique identifier identifying this StockMovement
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2548,7 +2520,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_stockmovement_update
+      operationId: v1_stockmovement_update
       description: Update a StockMovement
       parameters:
       - in: path
@@ -2559,7 +2531,7 @@ paths:
         description: A unique identifier identifying this StockMovement.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2573,8 +2545,7 @@ paths:
               $ref: '#/components/schemas/StockMovement'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2589,7 +2560,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_stockmovement_partial_update
+      operationId: v1_stockmovement_partial_update
       description: Update a StockMovement
       parameters:
       - in: path
@@ -2600,7 +2571,7 @@ paths:
         description: A unique identifier identifying this StockMovement.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2613,8 +2584,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedStockMovement'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2629,7 +2599,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_stockmovement_destroy
+      operationId: v1_stockmovement_destroy
       description: Delete a StockMovement
       parameters:
       - in: path
@@ -2640,22 +2610,20 @@ paths:
         description: A unique identifier identifying this StockMovement.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/stocks/:
     get:
-      operationId: api_v1_stocks_list
+      operationId: v1_stocks_list
       description: Return a list of all stock
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2672,10 +2640,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_stocks_create
+      operationId: v1_stocks_create
       description: Create a new stock
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2689,8 +2657,7 @@ paths:
               $ref: '#/components/schemas/Stock'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -2706,7 +2673,7 @@ paths:
           description: ''
   /api/v1/stocks/{uuid}/:
     get:
-      operationId: api_v1_stocks_retrieve
+      operationId: v1_stocks_retrieve
       description: Return a single stock
       parameters:
       - in: path
@@ -2717,10 +2684,9 @@ paths:
         description: A unique identifier identifying this Stock item.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2735,7 +2701,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_stocks_update
+      operationId: v1_stocks_update
       description: Update an existing stock
       parameters:
       - in: path
@@ -2746,7 +2712,7 @@ paths:
         description: A unique identifier identifying this Stock item.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2760,8 +2726,7 @@ paths:
               $ref: '#/components/schemas/Stock'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2776,7 +2741,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_stocks_partial_update
+      operationId: v1_stocks_partial_update
       description: Update an existing stock
       parameters:
       - in: path
@@ -2787,7 +2752,7 @@ paths:
         description: A unique identifier identifying this Stock item.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2800,8 +2765,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedStock'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2816,7 +2780,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_stocks_destroy
+      operationId: v1_stocks_destroy
       description: Delete an existing stock
       parameters:
       - in: path
@@ -2827,16 +2791,15 @@ paths:
         description: A unique identifier identifying this Stock item.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/stocks/{uuid}/list_all_stock_movements/:
-    post:
-      operationId: api_v1_stocks_list_all_stock_movements_create
+    get:
+      operationId: v1_stocks_list_all_stock_movements_list
       description: Returns a list of all stock movements associated with a particular
         stock
       parameters:
@@ -2848,10 +2811,9 @@ paths:
         description: A unique identifier identifying this Stock item.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2863,10 +2825,10 @@ paths:
           description: ''
   /api/v1/stocks/generate_stock_movement_report/:
     post:
-      operationId: api_v1_stocks_generate_stock_movement_report_create
+      operationId: v1_stocks_generate_stock_movement_report_create
       description: Generate stock movement report for a given date range
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2880,8 +2842,7 @@ paths:
               $ref: '#/components/schemas/GenerateStockMovementReport'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2891,10 +2852,10 @@ paths:
           description: ''
   /api/v1/stocks/search/:
     post:
-      operationId: api_v1_stocks_search_create
+      operationId: v1_stocks_search_create
       description: Retrieves a list of Products according to query.
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2908,8 +2869,7 @@ paths:
               $ref: '#/components/schemas/StockSearch'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2921,13 +2881,12 @@ paths:
           description: ''
   /api/v1/supplierproducts/:
     get:
-      operationId: api_v1_supplierproducts_list
+      operationId: v1_supplierproducts_list
       description: List all supplier products
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -2944,10 +2903,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_supplierproducts_create
+      operationId: v1_supplierproducts_create
       description: Create a new SupplierProduct
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -2961,8 +2920,7 @@ paths:
               $ref: '#/components/schemas/SupplierProduct'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -2978,7 +2936,7 @@ paths:
           description: ''
   /api/v1/supplierproducts/{uuid}/:
     get:
-      operationId: api_v1_supplierproducts_retrieve
+      operationId: v1_supplierproducts_retrieve
       description: Retun a single SupplierProduct
       parameters:
       - in: path
@@ -2989,10 +2947,9 @@ paths:
         description: A unique identifier identifying this SupplierProduct.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3007,7 +2964,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_supplierproducts_update
+      operationId: v1_supplierproducts_update
       description: Update a SupplierProduct
       parameters:
       - in: path
@@ -3018,7 +2975,7 @@ paths:
         description: A unique identifier identifying this SupplierProduct.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3032,8 +2989,7 @@ paths:
               $ref: '#/components/schemas/SupplierProduct'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3048,7 +3004,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_supplierproducts_partial_update
+      operationId: v1_supplierproducts_partial_update
       description: Update a SupplierProduct
       parameters:
       - in: path
@@ -3059,7 +3015,7 @@ paths:
         description: A unique identifier identifying this SupplierProduct.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3072,8 +3028,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSupplierProduct'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3088,7 +3043,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_supplierproducts_destroy
+      operationId: v1_supplierproducts_destroy
       description: Delete a SupplierProduct
       parameters:
       - in: path
@@ -3099,22 +3054,20 @@ paths:
         description: A unique identifier identifying this SupplierProduct.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/suppliers/:
     get:
-      operationId: api_v1_suppliers_list
+      operationId: v1_suppliers_list
       description: Return a list of all suppliers
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3131,10 +3084,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_suppliers_create
+      operationId: v1_suppliers_create
       description: Create a new supplier
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3148,8 +3101,7 @@ paths:
               $ref: '#/components/schemas/Supplier'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '201':
           content:
@@ -3165,7 +3117,7 @@ paths:
           description: ''
   /api/v1/suppliers/{uuid}/:
     get:
-      operationId: api_v1_suppliers_retrieve
+      operationId: v1_suppliers_retrieve
       description: Return a single supplier
       parameters:
       - in: path
@@ -3176,10 +3128,9 @@ paths:
         description: A unique identifier identifying this Supplier.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3194,7 +3145,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_suppliers_update
+      operationId: v1_suppliers_update
       description: Update an existing supplier
       parameters:
       - in: path
@@ -3205,7 +3156,7 @@ paths:
         description: A unique identifier identifying this Supplier.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3219,8 +3170,7 @@ paths:
               $ref: '#/components/schemas/Supplier'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3235,7 +3185,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_suppliers_partial_update
+      operationId: v1_suppliers_partial_update
       description: Update an existing supplier partially
       parameters:
       - in: path
@@ -3246,7 +3196,7 @@ paths:
         description: A unique identifier identifying this Supplier.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3259,8 +3209,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSupplier'
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3275,7 +3224,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_suppliers_destroy
+      operationId: v1_suppliers_destroy
       description: Delete an existing supplier
       parameters:
       - in: path
@@ -3286,16 +3235,15 @@ paths:
         description: A unique identifier identifying this Supplier.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '204':
           description: No response body
   /api/v1/suppliers/{uuid}/list_all_products/:
     get:
-      operationId: api_v1_suppliers_list_all_products_retrieve
+      operationId: v1_suppliers_list_all_products_retrieve
       description: List all Products associated with a Supplier
       parameters:
       - in: path
@@ -3306,10 +3254,9 @@ paths:
         description: A unique identifier identifying this Supplier.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
       responses:
         '200':
           content:
@@ -3325,7 +3272,7 @@ paths:
           description: ''
   /api/v1/users/:
     get:
-      operationId: api_v1_users_list
+      operationId: v1_users_list
       parameters:
       - name: limit
         required: false
@@ -3340,10 +3287,9 @@ paths:
         schema:
           type: integer
       tags:
-      - api
+      - v1
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -3359,9 +3305,10 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     post:
-      operationId: api_v1_users_create
+      operationId: v1_users_create
+      description: Create and register a user and create jwt tokens
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3375,8 +3322,7 @@ paths:
               $ref: '#/components/schemas/User'
         required: true
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '201':
@@ -3393,7 +3339,7 @@ paths:
           description: ''
   /api/v1/users/{id}/:
     get:
-      operationId: api_v1_users_retrieve
+      operationId: v1_users_retrieve
       parameters:
       - in: path
         name: id
@@ -3402,10 +3348,9 @@ paths:
         description: A unique integer value identifying this user.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -3421,7 +3366,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     put:
-      operationId: api_v1_users_update
+      operationId: v1_users_update
       parameters:
       - in: path
         name: id
@@ -3430,7 +3375,7 @@ paths:
         description: A unique integer value identifying this user.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3444,8 +3389,7 @@ paths:
               $ref: '#/components/schemas/User'
         required: true
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -3461,7 +3405,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     patch:
-      operationId: api_v1_users_partial_update
+      operationId: v1_users_partial_update
       parameters:
       - in: path
         name: id
@@ -3470,7 +3414,7 @@ paths:
         description: A unique integer value identifying this user.
         required: true
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3483,8 +3427,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUser'
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -3500,7 +3443,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
           description: ''
     delete:
-      operationId: api_v1_users_destroy
+      operationId: v1_users_destroy
       parameters:
       - in: path
         name: id
@@ -3509,19 +3452,34 @@ paths:
         description: A unique integer value identifying this user.
         required: true
       tags:
-      - api
+      - v1
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '204':
           description: No response body
+  /api/v1/users/get_token_associated_user/:
+    get:
+      operationId: v1_users_get_token_associated_user_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
   /api/v1/users/login/:
     post:
-      operationId: api_v1_users_login_create
+      operationId: v1_users_login_create
+      description: Login a user and generate jwt tokens
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3535,8 +3493,7 @@ paths:
               $ref: '#/components/schemas/User'
         required: true
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -3547,9 +3504,10 @@ paths:
           description: ''
   /api/v1/users/logout/:
     post:
-      operationId: api_v1_users_logout_create
+      operationId: v1_users_logout_create
+      description: Logging user out
       tags:
-      - api
+      - v1
       requestBody:
         content:
           application/json:
@@ -3563,8 +3521,7 @@ paths:
               $ref: '#/components/schemas/User'
         required: true
       security:
-      - tokenAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -3573,32 +3530,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
-  /auth-token/:
+  /api/v1/users/refresh_token/:
     post:
-      operationId: auth_token_create
+      operationId: v1_users_refresh_token_create
+      description: Custom view to refresh access_token
       tags:
-      - auth-token
+      - v1
       requestBody:
         content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AuthToken'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AuthToken'
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthToken'
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
         required: true
       security:
-      - cookieAuth: []
-      - tokenAuth: []
+      - jwtAuth: []
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/users/verify_token/:
+    post:
+      operationId: v1_users_verify_token_create
+      description: Custom view to verify access_token
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
           description: ''
 components:
   schemas:
@@ -3608,22 +3594,6 @@ components:
         detail:
           type: string
           default: Unfortunately requested resource not found
-    AuthToken:
-      type: object
-      properties:
-        username:
-          type: string
-          writeOnly: true
-        password:
-          type: string
-          writeOnly: true
-        token:
-          type: string
-          readOnly: true
-      required:
-      - password
-      - token
-      - username
     BlankEnum:
       enum:
       - ''
@@ -3699,6 +3669,19 @@ components:
       - name
       - updated_at
       - uuid
+    CategoryResponse:
+      type: object
+      description: Serializer for Response of the Category
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        thumbnail:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - name
     CategorySearch:
       type: object
       description: Custom serializer for search request query
@@ -3743,6 +3726,14 @@ components:
       - created_at
       - updated_at
       - uuid
+    CustomerSerializerAvecnameSole:
+      type: object
+      description: Serializer that just lists names only
+      properties:
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
     Employee:
       type: object
       description: Serializer for Employee model
@@ -3787,6 +3778,15 @@ components:
           type: string
           nullable: true
           maxLength: 255
+      required:
+      - user
+    EmployeeSerializerAvecNameSole:
+      type: object
+      description: Serializer for Employee using the first and last names of user
+        only
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponseSerializerAvecNameSole'
       required:
       - user
     GenerateSaleReceipt:
@@ -4562,10 +4562,7 @@ components:
           description: Get code of stock product object
           readOnly: true
       required:
-      - cost_per_unit
       - created_at
-      - price_per_unit_retail
-      - price_per_unit_wholesale
       - product_code
       - product_name
       - updated_at
@@ -4737,7 +4734,7 @@ components:
           readOnly: true
         product:
           allOf:
-          - $ref: '#/components/schemas/ProductResponse'
+          - $ref: '#/components/schemas/ProductSansSupplierResponse'
           readOnly: true
         sale:
           allOf:
@@ -4789,8 +4786,7 @@ components:
           format: uuid
           readOnly: true
         category:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/CategoryResponse'
         name:
           type: string
           maxLength: 255
@@ -5191,18 +5187,14 @@ components:
           readOnly: true
         customer:
           allOf:
-          - $ref: '#/components/schemas/Customer'
-          readOnly: true
-        business:
-          allOf:
-          - $ref: '#/components/schemas/Business'
+          - $ref: '#/components/schemas/CustomerSerializerAvecnameSole'
           readOnly: true
         payment:
           allOf:
           - $ref: '#/components/schemas/PaymentModeResponse'
           readOnly: true
         employee:
-          $ref: '#/components/schemas/EmployeeRestricted'
+          $ref: '#/components/schemas/EmployeeSerializerAvecNameSole'
         products:
           type: array
           items:
@@ -5245,7 +5237,6 @@ components:
           format: date-time
           readOnly: true
       required:
-      - business
       - created_at
       - customer
       - employee
@@ -5343,10 +5334,7 @@ components:
           type: string
           nullable: true
       required:
-      - cost_per_unit
       - created_at
-      - price_per_unit_retail
-      - price_per_unit_wholesale
       - product_uuid
       - updated_at
       - uuid
@@ -5535,11 +5523,8 @@ components:
           type: string
           nullable: true
       required:
-      - cost_per_unit
       - created_at
       - latest_stock_movement_type
-      - price_per_unit_retail
-      - price_per_unit_wholesale
       - product
       - updated_at
       - uuid
@@ -5724,11 +5709,6 @@ components:
           type: string
           format: uuid
           readOnly: true
-        products:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProductSansSupplierResponse'
-          readOnly: true
         name:
           type: string
           maxLength: 255
@@ -5755,9 +5735,40 @@ components:
       - created_at
       - name
       - phone_number
-      - products
       - updated_at
       - uuid
+    TokenObtainPair:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - password
+      - refresh
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
     TransactionTypeEnum:
       enum:
       - C
@@ -5823,13 +5834,20 @@ components:
       required:
       - username
       - uuid
+    UserResponseSerializerAvecNameSole:
+      type: object
+      description: Response Serializer for user data with only first_name and last_name
+      properties:
+        first_name:
+          type: string
+          title: Firts Name of User
+          maxLength: 255
+        last_name:
+          type: string
+          title: Last Name of User
+          maxLength: 255
   securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: sessionid
-    tokenAuth:
-      type: apiKey
-      in: header
-      name: Authorization
-      description: Token-based authentication with required prefix "Token"
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
