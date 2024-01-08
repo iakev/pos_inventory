@@ -267,6 +267,9 @@ class SupplierProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     lead_time = models.DecimalField(max_digits=5, decimal_places=2)
 
+    class Meta:
+        indexes = [models.Index(fields=["product", "supplier"])]
+
 
 class Stock(models.Model):
     """
@@ -296,11 +299,11 @@ class Stock(models.Model):
     stock_quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    cost_per_unit = models.DecimalField(max_digits=6, decimal_places=2)
-    price_per_unit_retail = models.DecimalField(max_digits=6, decimal_places=2)
-    price_per_unit_wholesale = models.DecimalField(max_digits=6, decimal_places=2)
-    reorder_level = models.DecimalField(null=True, max_digits=6, decimal_places=2)
-    reorder_quantity = models.DecimalField(null=True, max_digits=6, decimal_places=2)
+    cost_per_unit = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    price_per_unit_retail = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    price_per_unit_wholesale = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    reorder_level = models.DecimalField(null=True, max_digits=6, decimal_places=2, default=0.00)
+    reorder_quantity = models.DecimalField(null=True, max_digits=6, decimal_places=2, default=0.00)
     latest_stock_movement_type = models.CharField(null=True, max_length=4, choices=StockInOutType.choices)
     latest_stock_movement_quantity = models.DecimalField(null=True, max_digits=6, decimal_places=2, default=0.0)
     latest_stock_movement_remarks = models.TextField(null=True, blank=True)
