@@ -17,10 +17,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from products.models import Product, Category, Stock, SupplierProduct, StockMovement
-from sales.models import Sales, ProductSales, PurchaseProduct
+from sales.models import Sales, ProductSales, PurchaseProduct, PaymentMode
 from sales.api.v1.serializers import (
     CustomerSerializer,
-    EmployeeSerializer,
     EmployeeRestrictedSerializer,
     PaymentModeSerializer,
     SalesResponseSerializer,
@@ -54,7 +53,6 @@ from .serializers import (
     SupplierListAllProductsSerializer,
     SupplierRelatedResponseSerializer,
 )
-from .permissions import CategoryAccessPolicy
 
 
 class CategoryViewSet(ViewSet):
@@ -206,7 +204,7 @@ class CategoryViewSet(ViewSet):
         return Response(serializer.data)
 
 
-@response_schema(serializer=ProductResponseSerializer)
+@response_schema(serializer=ProductSansSupplierResponseSerializer)
 class ProductViewSet(ViewSet):
     """Basic viewset for Product Related Items"""
 
@@ -330,19 +328,18 @@ class ProductViewSet(ViewSet):
         """List all suppliers of a product"""
         product = get_object_or_404(self.product_queryset, uuid=uuid)
         product_suppliers = product.supplierproduct_set.all()
-        suppliers = []
-        for product_supplier in product_suppliers:
-            supplier = {
-                "uuid": product_supplier.supplier.uuid,
-                "name": product_supplier.supplier.name,
-                "address": product_supplier.supplier.address,
-                "email_address": product_supplier.supplier.email_address,
-                "phone_number": product_supplier.supplier.phone_number,
-                "lead_time": product_supplier.lead_time,
+        suppliers_data = [
+            {
+                "uuid": supplier_product.supplier.uuid,
+                "name": supplier_product.supplier.name,
+                "address": supplier_product.supplier.address,
+                "email_address": supplier_product.supplier.email_address,
+                "phone_number": supplier_product.supplier.phone_number,
+                "lead_time": supplier_product.lead_time,
             }
-            if supplier not in suppliers:
-                suppliers.append(supplier)
-        serializer = ProductListSuppliersSerializer(data=suppliers, many=True)
+            for supplier_product in product_suppliers
+        ]
+        serializer = ProductListSuppliersSerializer(data=suppliers_data, many=True)
         if serializer.is_valid():
             return Response(serializer.data, status=200)
         else:
@@ -414,10 +411,12 @@ class ProductViewSet(ViewSet):
         sales = []
         for product_sale in product_sales:
             sale_data = {
-                "sale_uuid": product_sale.sale.uuid,
-                "customer": CustomerSerializer(product_sale.sale.customer).data,
-                "cashier": EmployeeRestrictedSerializer(product_sale.sale.employee).data,
-                "payment": PaymentModeSerializer(product_sale.sale.payment).data,
+                "uuid": product_sale.sale.uuid,
+                "customer": product_sale.sale.customer.name,
+                "employee": product_sale.sale.employee.user.first_name
+                + " "
+                + product_sale.sale.employee.user.last_name,
+                "payment": dict(PaymentMode.PaymentMethod.choices)[product_sale.sale.payment.payment_method],
                 "sale_status": dict(Sales.TransactionProgress.choices)[product_sale.sale.sale_status],
                 "created_at": product_sale.sale.created_at,
                 "quantity_sold": product_sale.quantity_sold,
@@ -459,14 +458,16 @@ class ProductViewSet(ViewSet):
             if product_purchase.uuid in seen_product_purchase_uuids:
                 continue
             purchase_data = {
-                "purchase_uuid": product_purchase.purchase.uuid,
+                "uuid": product_purchase.purchase.uuid,
                 "supplier": product_purchase.supplier.name,
-                "employee": EmployeeRestrictedSerializer(product_purchase.purchase.employee).data,
+                "employee": product_purchase.purchase.employee.user.first_name
+                + " "
+                + product_purchase.purchase.employee.user.last_name,
                 "quantity": product_purchase.product_quantity,
                 "unit_price": product_purchase.purchase_unit_price,
                 "total_cost": product_purchase.total_product_cost,
-                "discount_applied": product_purchase.discount_applied,
-                "date_of_purchase": product_purchase.created_at,
+                "discount": product_purchase.discount_applied,
+                "created_at": product_purchase.created_at,
             }
             purchases.append(purchase_data)
         return Response(purchases, status=200)
@@ -667,7 +668,7 @@ class StockViewSet(ViewSet):
         request=StockMovementAvecProductSerializer,
         responses={status.HTTP_200_OK: StockMovementAvecProductResponseSerializer(many=True)},
     )
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=["GET"])
     def list_all_stock_movements(self, request, uuid=None):
         """
         Returns a list of all stock movements associated with a particular stock
