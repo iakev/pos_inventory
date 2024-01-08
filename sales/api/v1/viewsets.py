@@ -9,9 +9,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -236,13 +233,14 @@ class SalesViewSet(ViewSet):
                 "description": product_sale.product.description,
                 "unit_price": product_sale.price_per_unit,
                 "quantity": product_sale.quantity_sold,
-                "total_amount_without_tax": product_sale.price,
+                # "discount": product_sale.discount,
+                "subtotal": product_sale.price,
                 "tax_designation": dict(Product.TaxType.choices)[product_sale.product.tax_type],
                 "tax": product_sale.tax_amount,
             }
             receipt_data["product_info"].append(product_info)
 
-        receipt_data["total_amount_without_tax"] = sale.sale_amount_with_tax - sale.tax_amount
+        receipt_data["subtota"] = sale.sale_amount_with_tax - sale.tax_amount
         receipt_data["total_tax"] = total_tax
         receipt_data["total_amount"] = Decimal(total_amount)
         receipt_data["payment_mode"] = payment_mode
